@@ -12,6 +12,7 @@ import {
 import type { Card } from "../../lib/types";
 import { ClaimCardMonolith } from "../cards/ClaimCardMonolith-copy";
 import { SessionsGrid, type LogBox } from "./SessionsGrid";
+import { FrequencyVisualizer } from "./FrequencyVisualizer";
 
 const SWIPE_THRESHOLD = 90;
 const VISIBLE_STACK = 4;
@@ -22,8 +23,6 @@ const VIZ_W = 168;
 const VIZ_H = 82;
 const CTRL_GAP = 12;
 const EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
-// Static frequency bars (placeholder until wired to real incoming audio).
-const VIZ_BARS = [0.35, 0.62, 0.45, 0.8, 0.55, 0.95, 0.5, 0.72, 0.4, 0.86, 0.52, 0.7, 0.44, 0.6];
 
 const throwLeft = {
   // The intentionally-removed top card is thrown cleanly off to the left.
@@ -53,9 +52,11 @@ interface Props {
   onToggle?: () => void;
   // Demo-only extra control shown in the pill.
   onAddDemoClaim?: () => void;
+  // Live mic analyser accessor for the visualizer (null when no session runs).
+  getAnalyser?: () => AnalyserNode | null;
 }
 
-export function ClaimDeckStage({ cards, running: liveRunning, onToggle, onAddDemoClaim }: Props) {
+export function ClaimDeckStage({ cards, running: liveRunning, onToggle, onAddDemoClaim, getAnalyser }: Props) {
   const [deck, setDeck] = useState<Card[]>([]);
   // Current-session retrieval stack (a single start→stop cycle).
   const [session, setSession] = useState<Card[]>([]);
@@ -295,11 +296,7 @@ export function ClaimDeckStage({ cards, running: liveRunning, onToggle, onAddDem
           }
           aria-hidden={!running}
         >
-          <div className="viz-bars">
-            {VIZ_BARS.map((h, i) => (
-              <span key={i} className="viz-bar" style={{ height: `${Math.round(h * 100)}%` }} />
-            ))}
-          </div>
+          <FrequencyVisualizer active={running} getAnalyser={getAnalyser ?? (() => null)} />
         </motion.div>
 
         <motion.button

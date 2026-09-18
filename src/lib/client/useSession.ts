@@ -17,6 +17,10 @@ export function useSession() {
   const socketRef = useRef<WebSocket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const contextRef = useRef<AudioContext | null>(null);
+  // Analyser tapped off the same mic source so the visualizer can read live
+  // frequency data without opening a second microphone. Held in a ref (not
+  // state) because the visualizer polls it every animation frame.
+  const analyserRef = useRef<AnalyserNode | null>(null);
 
   const applyEvent = useCallback((event: ServerEvent) => {
     switch (event.type) {
@@ -60,6 +64,16 @@ export function useSession() {
     await context.audioWorklet.addModule("/pcm-worklet.js");
 
     const source = context.createMediaStreamSource(stream);
+
+    // Tap the same source into an analyser for the visualizer. It sits parallel
+    // to the worklet (source fans out to both) and is not connected to the
+    // destination, so it observes the mic without adding latency or feedback.
+    const analyser = context.createAnalyser();
+    analyser.fftSize = 64;
+    analyser.smoothingTimeConstant = 0.75;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+
     const worklet = new AudioWorkletNode(context, "pcm-worklet", {
       processorOptions: { targetRate: TARGET_RATE },
     });
@@ -76,8 +90,13 @@ export function useSession() {
     streamRef.current = null;
     contextRef.current = null;
     socketRef.current = null;
+    analyserRef.current = null;
     setStatus("stopped");
   }, []);
+
+  // Live analyser accessor for the visualizer. Returns null when no session is
+  // running, so the visualizer can fall back to its idle (all-equal) state.
+  const getAnalyser = useCallback(() => analyserRef.current, []);
 
   const dismiss = useCallback((id: string) => {
     setCards((prev) => prev.map((c) => (c.id === id ? { ...c, backgrounded: true } : c)));
@@ -87,7 +106,7 @@ export function useSession() {
     setCards((prev) => prev.map((c) => (c.id === id ? { ...c, backgrounded: false } : c)));
   }, []);
 
-  return { cards, transcript, status, start, stop, dismiss, restore };
+  return { cards, transcript, status, start, stop, dismiss, restore, getAnalyser };
 }
 
 function resolve(cards: Card[], id: string, result: Verdict): Card[] {

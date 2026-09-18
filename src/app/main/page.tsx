@@ -1,36 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ClaimDeckStage } from "../../components/deck/ClaimDeckStage-copy";
+import { useSession } from "../../lib/client/useSession";
 import type { Card } from "../../lib/types";
 
-const SEED: Card[] = [
-  {
-    id: "a",
-    claim: "The Great Wall of China is visible from space with the naked eye.",
-    status: "false",
-    reasoning: "It is not. The wall is far too narrow to distinguish from low Earth orbit without magnification.",
-    backgrounded: false,
-  },
-  {
-    id: "b",
-    claim: "Water boils at 100°C at sea level.",
-    status: "true",
-    reasoning: "Correct at standard atmospheric pressure (1 atm); the boiling point drops with altitude.",
-    backgrounded: false,
-  },
-];
-
 export default function MainPage() {
-  const [cards, setCards] = useState<Card[]>(SEED);
+  const { cards, status, start, stop, getAnalyser } = useSession();
+  // Locally-injected demo claims, kept separate from the live stream so the
+  // "+ claim" tester still exercises the deck without the backend running.
+  const [demoCards, setDemoCards] = useState<Card[]>([]);
+
+  const running = status === "listening" || status === "reconnecting";
+
+  // Start opens the real mic + WebSocket; Stop tears them down.
+  const toggle = () => {
+    if (running) stop();
+    else start();
+  };
+
+  // Newest first, matching the live stream's ordering.
+  const merged = useMemo(() => [...demoCards, ...cards], [demoCards, cards]);
 
   // Demo: manufacture a claim that verifies after a delay, mirroring the live
   // spawn → verdict flow so the deck's sync path is exercised.
   const addDemoClaim = () => {
     const id = `c-${Date.now()}`;
     const verdict = Math.random() > 0.5 ? "true" : "false";
-    setCards((cs) => [
-      ...cs,
+    setDemoCards((cs) => [
       {
         id,
         claim: "A freshly detected claim awaiting verification.",
@@ -38,9 +35,10 @@ export default function MainPage() {
         reasoning: "Resolved after checking the record.",
         backgrounded: false,
       },
+      ...cs,
     ]);
     window.setTimeout(() => {
-      setCards((cs) => cs.map((c) => (c.id === id ? { ...c, status: verdict } : c)));
+      setDemoCards((cs) => cs.map((c) => (c.id === id ? { ...c, status: verdict } : c)));
     }, 2200);
   };
 
@@ -52,7 +50,13 @@ export default function MainPage() {
           <GearIcon />
         </button>
       </header>
-      <ClaimDeckStage cards={cards} onAddDemoClaim={addDemoClaim} />
+      <ClaimDeckStage
+        cards={merged}
+        running={running}
+        onToggle={toggle}
+        onAddDemoClaim={addDemoClaim}
+        getAnalyser={getAnalyser}
+      />
     </div>
   );
 }
