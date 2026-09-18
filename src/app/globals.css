@@ -1,0 +1,671 @@
+@import "tailwindcss";
+
+@theme {
+  --font-array: var(--font-array), sans-serif;
+  --font-array-wide: var(--font-array-wide), sans-serif;
+  --font-bebas: var(--font-bebas), sans-serif;
+  --font-expose: var(--font-expose), sans-serif;
+}
+
+:root {
+  --bg: #F5F5F5;
+  --card: #ffffff;
+  --fg: #171717;
+  --muted: #737373;
+  --line: #e5e5e5;
+  --true: #16a34a;
+  --false: #dc2626;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Slab world: fine grain over the tinted verdict surface */
+.slab-grain {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Ticket world: perforated tear line with side punch-notches */
+.ticket-perf {
+  position: relative;
+  height: 0;
+  border-top: 1.5px dashed rgba(23, 23, 23, 0.16);
+  margin: 0 1.25rem;
+}
+.ticket-perf::before,
+.ticket-perf::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--bg);
+  transform: translateY(-50%);
+}
+.ticket-perf::before { left: -1.25rem; transform: translate(-50%, -50%); }
+.ticket-perf::after { right: -1.25rem; transform: translate(50%, -50%); }
+
+/* Stamp world: soft paper grain + struck-on verdict */
+.paper-grain {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+.stamp {
+  display: inline-block;
+  transform: rotate(-4deg);
+}
+
+/* Monolith back control: top + bottom rules that fade out at both edges */
+.verdict-back {
+  position: relative;
+}
+.verdict-back::before,
+.verdict-back::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--edge) 20%, var(--edge) 80%, transparent);
+}
+.verdict-back::before { top: 0; }
+.verdict-back::after { bottom: 0; }
+
+/* Monolith face swap: directional masked reveal, not a fade */
+.face {
+  animation: face-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes face-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .face { animation: none; }
+}
+
+/* Pending world: blinking grid loader */
+@keyframes grid-blink {
+  0%, 100% { opacity: 0.14; }
+  50% { opacity: 0.55; }
+}
+
+/* Per-cell bleed: the cell's own gray shade -> verdict color, no dark midpoint */
+@keyframes cell-bleed {
+  from { background-color: var(--shade); }
+  to { background-color: var(--verdict); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-cell { animation: none !important; }
+}
+
+/* Deck stage: header + borderless sessions sidebar + card deck */
+.deck-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.deck-header {
+  height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+}
+
+.deck-wordmark {
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+  color: var(--fg);
+}
+
+/* A round settings key — the reset key's convex bulge (raised, pressable), but a
+   full circle. Same material as the controls pill: a page-colour disc whose
+   ::before carries the convex neumorphic bulge, flattening on press. */
+.deck-page-3d .deck-settings {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  /* Mid-tone stroke near the surface colour: the engraving shadows below, not a
+     strong ink colour, are what make the gear read as carved in. */
+  color: #dcdcdc;
+  cursor: pointer;
+  transition: transform 0.08s ease-out;
+}
+
+/* The convex bulge behind the gear — cloned from .pill-btn::before, but radial
+   (all four sides) since this key is a standalone circle, not a pill segment. */
+.deck-page-3d .deck-settings::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  transition: opacity 0.09s ease-out;
+  box-shadow:
+    0 -3px 5px hsla(0, 0%, 100%, 0.55),
+    inset 0 3px 5px hsla(0, 0%, 100%, 0.55),
+    0 3px 5px hsla(0, 0%, 0%, 0.16),
+    inset 0 -3px 5px hsla(0, 0%, 0%, 0.16);
+}
+
+/* Press: the key sinks and its bulge flattens to the surface, then springs back. */
+.deck-page-3d .deck-settings:active {
+  transform: translateY(2px);
+}
+.deck-page-3d .deck-settings:active::before {
+  opacity: 0;
+}
+
+/* The gear reads as CARVED into the key face — recessed neumorphism, the icon
+   equivalent of the .viz-bar groove. Top-lit recess = dark at the top edge of
+   the cut, light at the bottom edge. So the stroke gets a dark drop-shadow above
+   and a light one below, engraving it into the surface. */
+.deck-page-3d .deck-settings svg {
+  filter:
+    drop-shadow(0 -0.75px 0.5px hsla(0, 0%, 0%, 0.4))
+    drop-shadow(0 0.75px 0.5px hsla(0, 0%, 100%, 0.85));
+}
+
+/* Body: three stacked layers */
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Layer 3: floating controls pill, top-center */
+.stage-pill {
+  position: absolute;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 2px 6px -2px rgba(20, 20, 20, 0.1), 0 12px 30px -12px rgba(20, 20, 20, 0.25);
+}
+
+.pill-btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pill-btn:hover {
+  background: rgba(20, 20, 20, 0.06);
+}
+
+.pill-primary {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+.pill-primary:hover {
+  background: var(--fg);
+  opacity: 0.9;
+}
+
+.pill-primary[data-running="true"] {
+  background: var(--false);
+  color: #fff;
+}
+
+.pill-primary[data-running="true"]:hover {
+  opacity: 0.9;
+}
+
+.pill-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+}
+
+/* Layer 2: the deck, centered in the body */
+.stage-deck {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7rem;
+  pointer-events: none;
+}
+
+.stage-deck > * {
+  pointer-events: auto;
+}
+
+.deck-viewport {
+  position: relative;
+  width: 300px;
+  height: 420px;
+  flex-shrink: 0;
+  overflow: visible;
+  border-radius: 34px;
+  /* Same material as the page — the trail's floor is the page colour, so the
+     centre where the deck sits shows no platform, only the carved channel. */
+  background: var(--bg);
+}
+
+/* The valley is the channel BETWEEN two concentric rings, exactly like the
+   snowball track. Each ring carries a paired outset + inset, dark + white
+   shadow: the outset lifts its outer side up to the surface, the inset curves
+   its inner side down into the channel — so each edge reads as a rounded lip
+   that bends, not a flat line. Top-lit, per the reference. */
+
+/* Outer ring — the trail's outer wall, bending down from the page surface. */
+.deck-viewport::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 28px;
+  pointer-events: none;
+  box-shadow:
+    0 -7px 6px hsla(0, 0%, 0%, 0.15),
+    inset 0 8px 12px hsla(0, 0%, 0%, 0.15),
+    0 4px 8px hsla(0, 0%, 100%, 0.4),
+    inset 0 -8px 12px hsla(0, 0%, 100%, 0.4);
+}
+
+.deck-card {
+  position: absolute;
+  /* Sits in the hole inside the valley — the "ball" in the track. */
+  inset: 30px;
+  cursor: grab;
+  border-radius: 4px;
+}
+
+.deck-card > article {
+  border-radius: inherit;
+}
+
+.deck-card[data-behind="true"] {
+  box-shadow: 0 10px 30px -12px rgba(20, 20, 20, 0.35);
+}
+
+.deck-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.deck-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  color: var(--fg);
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.deck-nav:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+
+.deck-nav:disabled {
+  opacity: 0.2;
+  cursor: default;
+}
+
+/* Layer 1: all-time sessions grid, anchored to body bottom, behind all */
+.stage-grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 0 1rem 1rem;
+  pointer-events: none;
+}
+
+.grid-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-row {
+  display: flex;
+}
+
+.grid-box {
+  flex-shrink: 0;
+  border-radius: 1px;
+  background-color: var(--box);
+  /* Flicker: the box's own color jitters dim↔bright. Colour only, never
+     opacity (which would reveal the pale background). Irregular steps + a
+     per-box phase (inline delay/duration) keep it random. */
+  animation: box-flicker 6s ease-in-out infinite;
+}
+
+@keyframes box-flicker {
+  0%   { filter: brightness(1); }
+  /* long calm stretch — the box mostly rests */
+  40%  { filter: brightness(1); }
+  /* one short burst of flicker */
+  48%  { filter: brightness(1.6); }
+  53%  { filter: brightness(0.85); }
+  58%  { filter: brightness(1.5); }
+  64%  { filter: brightness(1); }
+  /* calm again to the end */
+  100% { filter: brightness(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-box { animation: none; }
+}
+
+/* ── 3D deck (/main) ─────────────────────────────────────────────────────────
+   Scoped to .deck-page-3d. Sizes the viewport (and the card inset within it) and
+   scales the carved valley ring radii to match the frame. */
+.deck-page-3d .deck-viewport {
+  width: min(420px, 94vw);
+  height: min(530px, 82vh);
+  border-radius: 42px;
+}
+
+.deck-page-3d .deck-card {
+  inset: 0;
+  width: min(300px, 80vw);
+  height: min(420px, 112vw); /* 80vw × 1.4 — keeps the 5:7 card ratio */
+  margin: auto;
+}
+
+.deck-page-3d .deck-viewport::before {
+  border-radius: 36px;
+  /* Phase 1: valley widened a little for the 3D deck — same depth. */
+  box-shadow:
+    0 -9px 8px hsla(0, 0%, 0%, 0.15),
+    inset 0 11px 16px hsla(0, 0%, 0%, 0.15),
+    0 5px 10px hsla(0, 0%, 100%, 0.4),
+    inset 0 -11px 16px hsla(0, 0%, 100%, 0.4);
+}
+
+/* The controls pill is built as SEPARATE raised keys attached at their seams —
+   not one pill with buttons floating inside it. The pill itself is just the
+   page-colour group (no fill boundary, no shadow); each KEY carries its own
+   convex bulge, and the separators are the seams/edges between keys. On press a
+   key flattens — it descends from raised to flat as a solid, with NO inset and
+   no new lines — then springs back. */
+.deck-page-3d .stage-pill {
+  padding: 0;
+  gap: 0;
+  align-items: stretch; /* keys fill the full pill height */
+  background: var(--bg);
+  box-shadow: none;
+}
+
+/* Each key = its whole section: full height, its own padding is the section's
+   width and click area. Square so keys sit seam-to-seam; only the two end keys
+   round to form the pill's ends. Text-only. */
+.deck-page-3d .pill-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  border-radius: 0;
+  /* Physical press: the key travels down and springs back. */
+  transition: transform 0.08s ease-out;
+}
+
+/* Press: the key physically sinks down, then pops back up on release. */
+.deck-page-3d .pill-btn:active {
+  transform: translateY(3px);
+}
+.deck-page-3d .stage-pill > .pill-btn:first-child {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+.deck-page-3d .stage-pill > .pill-btn:last-child {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+.deck-page-3d .pill-btn:hover {
+  background: transparent;
+}
+
+/* The key's raised bulge (convex — the groove structure inverted). Vertical-only
+   shadows, so adjacent keys don't bleed sideways and the row still reads as one
+   bar. Full width per key (no horizontal inset) so the bulge is continuous
+   across the seams. Sits behind the label. */
+.deck-page-3d .pill-btn::before {
+  content: "";
+  position: absolute;
+  inset: 3px 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  /* Snappy: the bulge flattens/returns quickly. */
+  transition: opacity 0.09s ease-out;
+  box-shadow:
+    0 -4px 6px hsla(0, 0%, 100%, 0.5),
+    inset 0 4px 6px hsla(0, 0%, 100%, 0.5),
+    0 3px 5px hsla(0, 0%, 0%, 0.16),
+    inset 0 -4px 6px hsla(0, 0%, 0%, 0.16);
+}
+
+/* Press = the key descends: its bulge flattens to the surface. No inset, no new
+   border — the raised key simply drops to flat, then springs back on release. */
+.deck-page-3d .pill-btn:active::before {
+  opacity: 0;
+}
+
+/* No drawn separator: the keys sit flush against each other, so the meeting of
+   two adjacent bulges reads as a seam on its own — a border with no line and no
+   gap. Collapse the separator element to nothing. */
+.deck-page-3d .pill-sep {
+  display: none;
+}
+
+.deck-page-3d .deck-header {
+  height: 64px;
+}
+
+/* Controls row: buttons sit on a fixed bottom baseline; the visualizer rises
+   above them from the fabric. Height leaves room for the risen visualizer. */
+.deck-page-3d .stage-controls {
+  position: absolute;
+  /* Deck stays vertically centred; controls sit a fixed gap above its top edge. */
+  top: calc(50% - (min(530px, 82vh) / 2) - 82px - 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deck-page-3d .stage-controls > * {
+  pointer-events: auto;
+}
+
+/* Each button's OUTER (away-from-centre) corners are always fully round; the
+   INNER corners animate flat↔round (via motion) as the two join / split. */
+.deck-page-3d .ctrl-start {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+.deck-page-3d .ctrl-reset {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+/* The visualizer: the same raised-from-fabric bulge as the keys, but taller. It
+   rises in the centre gap once the buttons have parted. Overflow visible so the
+   bulge slopes into the page (no border). */
+.deck-page-3d .ctrl-viz {
+  position: relative;
+  flex-shrink: 0;
+  overflow: visible;
+  border-radius: 999px;
+  /* Transparent like the buttons — an opaque fill would sit ON TOP of the
+     ::before bulge (z-index:-1) and hide it, making it read flat. The page shows
+     through, and the bulge renders over it. */
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.deck-page-3d .ctrl-viz::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  box-shadow:
+    0 -4px 8px hsla(0, 0%, 100%, 0.6),
+    inset 0 5px 8px hsla(0, 0%, 100%, 0.6),
+    0 4px 7px hsla(0, 0%, 0%, 0.18),
+    inset 0 -5px 8px hsla(0, 0%, 0%, 0.18);
+}
+
+/* Static frequency bars (placeholder until wired to real audio). */
+.deck-page-3d .viz-bars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 60%;
+  width: 100%;
+  padding: 0 1rem;
+}
+/* Each bar is a groove carved into the visualizer face — recessed, not raised.
+   Same material (transparent), depth from an inset shadow: dark upper wall, a
+   faint light lower lip, top-lit like the deck valley. */
+.deck-page-3d .viz-bar {
+  width: 6px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow:
+    inset 0 2px 3px rgba(20, 20, 30, 0.5),
+    inset 0 -1.5px 2px rgba(255, 255, 255, 0.85);
+}
+
+/* Detached demo-only "+ claim" button, parked in a corner. Deliberately plain
+   (not neumorphic) — it's just a demo utility, not part of the controls pill. */
+.deck-page-3d .stage-demo-claim {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 3;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--card);
+  box-shadow: 0 2px 8px -3px rgba(20, 20, 20, 0.2);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.deck-page-3d .stage-demo-claim:hover {
+  color: var(--fg);
+}
+
+/* Start/Stop: text only — no black fill. */
+.deck-page-3d .pill-primary,
+.deck-page-3d .pill-primary:hover,
+.deck-page-3d .pill-primary[data-running="true"],
+.deck-page-3d .pill-primary[data-running="true"]:hover {
+  background: transparent;
+  color: var(--fg);
+  opacity: 1;
+}
+
+/* Mobile ONLY (< 640px): scale down the groove, cards, settings button, and the
+   controls→groove gap. Placed at the END so it overrides the desktop
+   .deck-page-3d rules above (equal specificity → later source wins). These need
+   min()/calc() (or match .deck-page-3d specificity), so they live in CSS rather
+   than Tailwind. Nothing else changes. */
+@media (max-width: 640px) {
+  /* Everything derives from ONE clamped height H so the card is always shorter
+     than the groove and the groove never turns fat/squat. On a tall narrow phone
+     H is driven by width (100vw); on a wide-short screen (e.g. 540×720) the 55vh
+     cap takes over — and because the card height is a fraction of the SAME H, it
+     shrinks with the groove instead of overflowing it. Widths are derived from H
+     via the 5:7 card ratio, so no independent vw can make the box fat. */
+  .deck-page-3d .deck-viewport {
+    height: min(100vw, 55vh);
+    width: calc(min(100vw, 55vh) / 1.18); /* wider, so more valley floor at the sides */
+  }
+
+  .deck-page-3d .deck-card {
+    height: calc(min(100vw, 55vh) * 0.8);       /* smaller in the groove — more floor shows */
+    width: calc(min(100vw, 55vh) * 0.8 / 1.4);  /* 5:7 card ratio */
+  }
+
+  .deck-page-3d .deck-settings {
+    width: 36px;
+    height: 36px;
+  }
+  .deck-page-3d .deck-settings svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Start/reset keys scaled down a little for phones. */
+  .deck-page-3d .pill-btn {
+    padding: 0.6rem 1.15rem;
+    font-size: 0.85rem;
+  }
+
+  /* Deck stays vertically centred; controls hug it. The 82px row centres the
+     short (~40px) buttons, so ~21px of empty row hangs below them — anchor off the
+     buttons' bottom (~61px into the row), not the full 82px, plus a small 6px gap,
+     so the VISIBLE buttons sit close to the groove. */
+  .deck-page-3d .stage-controls {
+    top: calc(50% - (min(100vw, 55vh) / 2) - 61px - 40px);
+  }
+}
