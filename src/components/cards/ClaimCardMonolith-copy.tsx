@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import type { Card } from "../../lib/types";
 
 const VERDICT = {
@@ -30,6 +31,183 @@ interface Cell {
 function grayShade(): string {
   const v = Math.floor(Math.random() * 210) + 30;
   return `rgb(${v}, ${v}, ${v})`;
+}
+
+// The hostname makes a compact, readable label for a source button
+// (e.g. https://www.bbc.com/news/… → "bbc.com"). Falls back to the raw
+// string if it isn't a parseable URL.
+function sourceLabel(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+// The verify model often embeds its citations directly in the reasoning prose —
+// as markdown links `[label](url)` or bare URLs — rather than only in the
+// structured sources array. Pull those out so they render as source buttons and
+// the displayed reasoning reads cleanly without raw URLs in it.
+function extractSources(reasoning: string): { text: string; urls: string[] } {
+  const urls: string[] = [];
+  let text = reasoning;
+
+  // Markdown links first: [label](url) → drop the whole token, keep the url.
+  text = text.replace(/\[[^\]]*\]\((https?:\/\/[^\s)]+)\)/g, (_, url) => {
+    urls.push(cleanUrl(url));
+    return "";
+  });
+
+  // Then any remaining bare URLs left in the prose.
+  text = text.replace(/https?:\/\/[^\s)]+/g, (url) => {
+    urls.push(cleanUrl(url));
+    return "";
+  });
+
+  // Tidy the seams left where links were removed (stray brackets, doubled
+  // spaces, spaces before punctuation, orphaned separators).
+  text = text
+    .replace(/\(\s*\)/g, "")
+    .replace(/\[\s*\]/g, "")
+    .replace(/\s+([.,;:])/g, "$1")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+$/g, "")
+    .trim();
+
+  return { text, urls: [...new Set(urls)] };
+}
+
+// Strip tracking query params (e.g. utm_source=openai the web-search tool
+// appends) so cited URLs read clean. Leaves everything else untouched.
+function cleanUrl(raw: string): string {
+  try {
+    const url = new URL(raw);
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^(utm_|ref$|ref_|fbclid$|gclid$)/i.test(key)) url.searchParams.delete(key);
+    }
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
+
+// Sources rendered as clickable buttons at the bottom of the card's back face.
+// One source → a single labelled pill. Multiple sources → a circular trigger
+// that, when tapped, bounces the individual source buttons up into existence.
+function SourceLinks({ sources }: { sources: string[] }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  // Motion attaches its drag pointerdown listener to the card element and reacts
+  // in the bubble phase. We attach our own NATIVE bubble-phase listeners to the
+  // source island: the event still reaches the child link/button first (so the
+  // click works), then we stop it at the island before it bubbles up to the card
+  // — so pressing a source never starts a card drag/flip.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const swallow = (e: Event) => e.stopPropagation();
+    el.addEventListener("pointerdown", swallow);
+    el.addEventListener("pointerup", swallow);
+    el.addEventListener("mousedown", swallow);
+    el.addEventListener("touchstart", swallow);
+    return () => {
+      el.removeEventListener("pointerdown", swallow);
+      el.removeEventListener("pointerup", swallow);
+      el.removeEventListener("mousedown", swallow);
+      el.removeEventListener("touchstart", swallow);
+    };
+  }, [open]);
+
+  if (sources.length === 0) return null;
+
+  const pill =
+    "inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] transition-colors duration-150";
+  const pillStyle: CSSProperties = {
+    borderColor: "rgba(255,255,255,0.28)",
+    color: "rgba(255,255,255,0.85)",
+    background: "rgba(255,255,255,0.06)",
+  };
+  if (sources.length === 1) {
+    return (
+      <div
+        ref={rootRef}
+        className="mt-auto flex justify-center pt-4"
+        style={{ position: "relative", zIndex: 10000 }}
+      >
+        <a href={sources[0]} target="_blank" rel="noopener noreferrer" className={pill} style={pillStyle}>
+          <LinkIcon />
+          {sourceLabel(sources[0])}
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={rootRef}
+      className="mt-auto flex flex-col items-center pt-4"
+      style={{ position: "relative", zIndex: 10000 }}
+    >
+      {/* Expanded links overlay the findings text (absolute, anchored just above
+          the circle) rather than pushing layout, so long findings never collide
+          with them. */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="absolute bottom-full left-1/2 mb-1 flex -translate-x-1/2 flex-col items-center gap-1.5"
+            initial={false}
+          >
+            {sources.map((url, i) => (
+              <motion.a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={pill}
+                style={pillStyle}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 16 }}
+                transition={{ duration: 0.32, ease: [0.34, 1.3, 0.5, 1], delay: i * 0.05 }}
+              >
+                <LinkIcon />
+                {sourceLabel(url)}
+              </motion.a>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label={open ? "Hide sources" : `Show ${sources.length} sources`}
+        aria-expanded={open}
+        className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border font-mono text-[11px] font-semibold transition-colors duration-150"
+        style={{
+          borderColor: "rgba(255,255,255,0.28)",
+          color: "rgba(255,255,255,0.9)",
+          background: "rgba(255,255,255,0.06)",
+        }}
+      >
+        {open ? <LinkIcon /> : sources.length}
+      </button>
+    </div>
+  );
+}
+
+function LinkIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 type Phase = "blinking" | "bleeding" | "verdict";
@@ -138,6 +316,12 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
       ? `radial-gradient(120% 90% at 20% 0%, ${v.base} 0%, ${v.deep} 78%)`
       : "var(--bg)";
   const showGrid = phase !== "verdict";
+  // The model may embed citation links inside the reasoning prose. Pull them out
+  // so the text reads clean and the URLs become source buttons — merged with any
+  // that already arrived in the structured sources array.
+  const extracted = card.reasoning ? extractSources(card.reasoning) : { text: "", urls: [] };
+  const findingText = extracted.text;
+  const findingSources = [...new Set([...(card.sources ?? []), ...extracted.urls])];
   const hasFinding = Boolean(card.reasoning);
   const finding = showFinding && hasFinding;
   // In controlled (physical-spin) mode the finding lives on the card's real back
@@ -157,6 +341,11 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
         backfaceVisibility: controlled ? "hidden" : undefined,
         WebkitBackfaceVisibility: controlled ? "hidden" : undefined,
         borderRadius: controlled ? "inherit" : undefined,
+        // backface-visibility hides the away-facing side visually, but the front
+        // <article> is still hit-testable and overlaps the back face. Once the
+        // card is flipped to its finding, disable pointer events on the front so
+        // its bottom "the finding" button can't be clicked through the back.
+        pointerEvents: controlled && showFinding ? "none" : undefined,
       }}
       onClick={onDismiss}
     >
@@ -199,7 +388,7 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
             <div key="finding" className="face relative z-20 flex h-full flex-col" onClick={(e) => e.stopPropagation()}>
               <button
                 onClick={() => toggleFinding(false)}
-                className="verdict-back group flex w-full items-center gap-2.5 py-3 font-mono text-[11px] uppercase tracking-[0.2em] transition-opacity duration-200 hover:opacity-100"
+                className="verdict-back group flex w-full items-center gap-2 py-2 font-mono text-[9px] uppercase tracking-[0.2em] transition-opacity duration-200 hover:opacity-100"
                 style={
                   {
                     color: "rgba(255,255,255,0.7)",
@@ -210,8 +399,8 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
                 aria-label="Back to the verdict"
               >
                 <svg
-                  width="18"
-                  height="18"
+                  width="14"
+                  height="14"
                   viewBox="0 0 20 20"
                   fill="none"
                   className="transition-transform duration-200 group-hover:-translate-x-0.5"
@@ -221,10 +410,11 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
                 </svg>
                 The verdict
               </button>
-              <div className="flex flex-1 flex-col">
-                <p className="mt-3 font-expose text-md leading-[1.62]" style={{ color: "rgba(255,255,255,0.9)" }}>
-                  {card.reasoning}
+              <div className="flex min-h-0 flex-1 flex-col">
+                <p className="finding-scroll mt-1 min-h-0 flex-1 overflow-y-auto font-expose text-md leading-[1.62]" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  {findingText}
                 </p>
+                {findingSources.length > 0 && <SourceLinks sources={findingSources} />}
               </div>
             </div>
           ) : (
@@ -282,6 +472,10 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
           backfaceVisibility: "hidden",
           WebkitBackfaceVisibility: "hidden",
           borderRadius: "inherit",
+          // Mirror of the front guard: while the card faces its verdict (not yet
+          // flipped), the back face is turned away — disable its pointer events
+          // so it can't catch clicks meant for the front.
+          pointerEvents: showFinding ? undefined : "none",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -289,7 +483,7 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
         <div className="face relative z-20 flex h-full flex-col">
           <button
             onClick={() => toggleFinding(false)}
-            className="verdict-back group flex w-full items-center gap-2.5 py-3 font-mono text-[11px] uppercase tracking-[0.2em] transition-opacity duration-200 hover:opacity-100"
+            className="verdict-back group flex w-full items-center gap-2 py-2 font-mono text-[9px] uppercase tracking-[0.2em] transition-opacity duration-200 hover:opacity-100"
             style={
               {
                 color: "rgba(255,255,255,0.7)",
@@ -300,8 +494,8 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
             aria-label="Back to the verdict"
           >
             <svg
-              width="18"
-              height="18"
+              width="14"
+              height="14"
               viewBox="0 0 20 20"
               fill="none"
               className="transition-transform duration-200 group-hover:-translate-x-0.5"
@@ -311,10 +505,11 @@ export function ClaimCardMonolith({ card, onDismiss, flipped, onToggleFlip, onVe
             </svg>
             The verdict
           </button>
-          <div className="flex flex-1 flex-col">
-            <p className="mt-3 font-expose text-md leading-[1.62]" style={{ color: "rgba(255,255,255,0.9)" }}>
-              {card.reasoning}
+          <div className="flex min-h-0 flex-1 flex-col">
+            <p className="finding-scroll mt-1 min-h-0 flex-1 overflow-y-auto font-expose text-md leading-[1.62]" style={{ color: "rgba(255,255,255,0.9)" }}>
+              {findingText}
             </p>
+            {findingSources.length > 0 && <SourceLinks sources={findingSources} />}
           </div>
         </div>
       </article>
