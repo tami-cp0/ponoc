@@ -27,7 +27,6 @@ const array = localFont({
   src: [
     { path: "../fonts/Array-Regular.woff2", weight: "400", style: "normal" },
     { path: "../fonts/Array-Semibold.woff2", weight: "600", style: "normal" },
-    { path: "../fonts/Array-Bold.woff2", weight: "700", style: "normal" },
   ],
 });
 
@@ -35,7 +34,6 @@ const arrayWide = localFont({
   variable: "--font-array-wide",
   src: [
     { path: "../fonts/Array-SemiboldWide.woff2", weight: "600", style: "normal" },
-    { path: "../fonts/Array-BoldWide.woff2", weight: "700", style: "normal" },
   ],
 });
 
@@ -48,8 +46,6 @@ const expose = localFont({
   variable: "--font-expose",
   src: [
     { path: "../fonts/Expose-Regular.woff2", weight: "400", style: "normal" },
-    { path: "../fonts/Expose-Medium.woff2", weight: "500", style: "normal" },
-    { path: "../fonts/Expose-Black.woff2", weight: "900", style: "normal" },
   ],
 });
 
