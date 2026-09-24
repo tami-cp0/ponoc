@@ -29,14 +29,18 @@ export class ClaimQueue {
     };
   }
 
-  add(text: string, priority: "high" | "low", at: number): void {
-    if (this.isDuplicate(text, at)) return;
+  // Returns the new claim's id, or null if the claim was dropped as a duplicate.
+  // The id lets the caller attribute upstream costs (e.g. the triage that
+  // surfaced the claim) to the card once it resolves.
+  add(text: string, priority: "high" | "low", at: number): string | null {
+    if (this.isDuplicate(text, at)) return null;
     this.recent.push({ text, at });
 
     const claim: Claim = { id: randomUUID(), text, priority, at };
     this.opts.onSpawned(claim);
     this.pending.push(claim);
     this.pump();
+    return claim.id;
   }
 
   async drain(): Promise<void> {

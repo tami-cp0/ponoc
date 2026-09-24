@@ -17,6 +17,15 @@ export interface Utterance {
   at: number;
 }
 
+// Token spend for one model call. total is authoritative — providers report it
+// directly rather than us summing input + output (they can differ, e.g. cached
+// or reasoning tokens).
+export interface TokenUsage {
+  input: number;
+  output: number;
+  total: number;
+}
+
 export interface TriageResult {
   utterance: string;
   claim_type: ClaimType;
@@ -25,12 +34,14 @@ export interface TriageResult {
   canonical_claim: string | null;
   confidence: number;
   priority: "high" | "low";
+  usage?: TokenUsage;
 }
 
 export interface Verdict {
   verdict: boolean;
   reasoning: string;
   sources?: string[];
+  usage?: TokenUsage;
 }
 
 export interface Claim {
@@ -45,6 +56,9 @@ export type ServerEvent =
   | { type: "claim:spawned"; claim: Claim }
   | { type: "claim:verdict"; id: string; result: Verdict }
   | { type: "claim:error"; id: string; message: string }
+  // card: tokens spent generating a single card (its triage + verify calls).
+  // session: running total across the whole session so far.
+  | { type: "usage"; card: number; session: TokenUsage }
   | { type: "status"; state: "listening" | "reconnecting" | "stopped" };
 
 export type CardStatus = "verifying" | "true" | "false" | "error";

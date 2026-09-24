@@ -3,13 +3,18 @@ import type { LLMProvider } from "./llm/provider";
 import { ClaimQueue } from "./queue/queue";
 import { Segmenter } from "./segment/segment";
 import { DeepgramRelay } from "./stt/relay";
-import type { ServerEvent } from "./types";
+import type { ServerEvent, TokenUsage } from "./types";
+import { UsageMeter, cardTotal } from "./usage";
 
 export class Session {
   private readonly relay: DeepgramRelay;
   private readonly segmenter = new Segmenter();
   private readonly queue: ClaimQueue;
   private readonly window: string[] = [];
+  // Running token spend for this session, plus the triage cost of each queued
+  // claim so a card's total (triage + verify) can be reported when it resolves.
+  private readonly usage = new UsageMeter();
+  private readonly triageCost = new Map<string, TokenUsage | undefined>();
 
   constructor(
     private readonly provider: LLMProvider,
@@ -33,8 +38,22 @@ export class Session {
         console.log("[4] queued claim:", claim.text);
         this.send({ type: "claim:spawned", claim });
       },
-      onVerdict: (id, result) => this.send({ type: "claim:verdict", id, result }),
-      onError: (id, message) => this.send({ type: "claim:error", id, message }),
+      onVerdict: (id, result) => {
+        this.send({ type: "claim:verdict", id, result });
+        // A card's cost is its triage + verify spend. Fold verify into the
+        // session total, then report both the per-card total and the new
+        // running session total.
+        this.usage.record(result.usage);
+        const triage = this.triageCost.get(id);
+        this.triageCost.delete(id);
+        const card = cardTotal(triage, result.usage);
+        console.log("[6] tokens — card:", card, "session:", this.usage.total.total);
+        this.send({ type: "usage", card, session: this.usage.total });
+      },
+      onError: (id, message) => {
+        this.triageCost.delete(id);
+        this.send({ type: "claim:error", id, message });
+      },
     });
   }
 
@@ -77,8 +96,13 @@ export class Session {
         result.is_checkable_now ? "✓ checkable" : "✗ skip",
         result.canonical_claim ? `→ ${result.canonical_claim}` : "",
       );
+      // Every triage call costs tokens, checkable or not — fold it into the
+      // session total now. If it produces a card, stash its cost against the
+      // claim id so the verdict can bundle it into the card total.
+      this.usage.record(result.usage);
       if (result.is_checkable_now && result.canonical_claim) {
-        this.queue.add(result.canonical_claim, result.priority, Date.now());
+        const id = this.queue.add(result.canonical_claim, result.priority, Date.now());
+        if (id) this.triageCost.set(id, result.usage);
       }
     } catch (err) {
       console.log("[3] triage failed:", (err as Error).message);

@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { config } from "../config";
-import type { TriageResult, Verdict } from "../types";
+import type { TokenUsage, TriageResult, Verdict } from "../types";
 import type { LLMProvider } from "./provider";
 
 const TRIAGE_SCHEMA = {
@@ -38,12 +38,13 @@ Rules:
 - Predictions about the future have a fact of the matter but cannot be resolved yet: is_checkable_now=false, unverifiable_reason="future_looking".
 - Casual phrasing can still carry an empirical claim (e.g. "no one likes X" implies a population claim). Classify by the underlying claim, not surface phrasing.
 - Favor recall: when unsure whether something is checkable, lean towards is_checkable_now=true.
-- canonical_claim: a clear, standalone, verifiable restatement (resolve pronouns from context). Null if not checkable.
+- canonical_claim: make the claim standalone using the speaker's OWN words. Do NOT paraphrase or reword. Only: (a) join fragments spread across segments into one sentence, (b) resolve pronouns/references from context (e.g. "it" -> "Nigeria's economy"), and (c) fix obvious grammar from the stitching. Keep every qualifier, hedge, and framing the speaker used ("even though it seems...", "for the citizens", "roughly", etc.); dropping them changes the claim. Null if not checkable.
 - priority: "high" when the claim carries specific numbers, names, or dates; otherwise "low".`;
 
 const VERIFY_INSTRUCTIONS = `You are a fact-checker. Use web search to verify the claim.
-Return a verdict of true or false and a concise one or two sentence reasoning grounded in what you found.
-If the claim is broadly correct, verdict is true; if it is false or misleading, verdict is false.`;
+If the claim is broadly correct, verdict is true; if it is false or misleading, verdict is false.
+reasoning: the single most decisive piece of evidence for the verdict, stated directly. Keep it to 1-2 short sentences, at most ~40 words. Lead with the fact that settles it. Do NOT explain nuance, give background, weigh both sides, or add a "that means..." interpretation. Just the evidence behind true/false.
+Cite the specific page(s) that directly contain the supporting evidence (the actual article, dataset, report, or statement), not a site homepage, section index, or generic landing page. Prefer primary sources (official data, the original report or statement) over aggregators.`;
 
 const VERIFY_SCHEMA = {
   type: "object",
@@ -84,7 +85,7 @@ export class OpenAIProvider implements LLMProvider {
     });
 
     const parsed = JSON.parse(response.output_text);
-    return { utterance, ...parsed } as TriageResult;
+    return { utterance, ...parsed, usage: readUsage(response) } as TriageResult;
   }
 
   async verify(claim: string): Promise<Verdict> {
@@ -105,8 +106,23 @@ export class OpenAIProvider implements LLMProvider {
 
     const parsed = JSON.parse(response.output_text);
     const sources = collectSources(response);
-    return { ...parsed, ...(sources.length ? { sources } : {}) } as Verdict;
+    return { ...parsed, ...(sources.length ? { sources } : {}), usage: readUsage(response) } as Verdict;
   }
+}
+
+// Pull the token spend off a Responses API result. total is what the API bills,
+// so we trust its total_tokens directly rather than re-adding the parts. Returns
+// undefined if the field is absent (e.g. a mocked provider in tests).
+function readUsage(response: {
+  usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number };
+}): TokenUsage | undefined {
+  const u = response.usage;
+  if (!u) return undefined;
+  return {
+    input: u.input_tokens ?? 0,
+    output: u.output_tokens ?? 0,
+    total: u.total_tokens ?? 0,
+  };
 }
 
 function collectSources(response: { output?: unknown }): string[] {
@@ -115,8 +131,22 @@ function collectSources(response: { output?: unknown }): string[] {
   for (const item of output) {
     const action = item.action as { sources?: Array<{ url?: string }> } | undefined;
     for (const s of action?.sources ?? []) {
-      if (s.url) urls.add(s.url);
+      if (s.url) urls.add(cleanUrl(s.url));
     }
   }
   return [...urls];
+}
+
+// Strip tracking query params (e.g. the utm_source=openai the web-search tool
+// appends) so cited URLs are clean. Leaves everything else untouched.
+function cleanUrl(raw: string): string {
+  try {
+    const url = new URL(raw);
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^(utm_|ref$|ref_|fbclid$|gclid$)/i.test(key)) url.searchParams.delete(key);
+    }
+    return url.toString();
+  } catch {
+    return raw;
+  }
 }
