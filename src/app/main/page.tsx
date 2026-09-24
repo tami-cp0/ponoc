@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ClaimDeckStage } from "../../components/deck/ClaimDeckStage-copy";
+import { SettingsModal } from "../../components/settings/SettingsModal";
 import { useSession } from "../../lib/client/useSession";
 import type { Card } from "../../lib/types";
 
@@ -10,6 +11,7 @@ export default function MainPage() {
   // Locally-injected demo claims, kept separate from the live stream so the
   // "+ claim" tester still exercises the deck without the backend running.
   const [demoCards, setDemoCards] = useState<Card[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const running = status === "listening" || status === "reconnecting";
 
@@ -22,11 +24,29 @@ export default function MainPage() {
   // Newest first, matching the live stream's ordering.
   const merged = useMemo(() => [...demoCards, ...cards], [demoCards, cards]);
 
+  // Verdict tally for settings — the same true/false the deck shows in green/red,
+  // counted across every resolved card this session.
+  const tally = useMemo(
+    () => ({
+      truths: merged.filter((c) => c.status === "true").length,
+      falses: merged.filter((c) => c.status === "false").length,
+    }),
+    [merged],
+  );
+
   // Demo: manufacture a claim that verifies after a delay, mirroring the live
   // spawn → verdict flow so the deck's sync path is exercised.
   const addDemoClaim = () => {
     const id = `c-${Date.now()}`;
     const verdict = Math.random() > 0.5 ? "true" : "false";
+    // Mirror how the verify model actually returns citations: markdown links
+    // embedded inline in the reasoning prose. The card extracts them into source
+    // buttons and shows the cleaned text. Alternate one vs. several links so both
+    // the single-pill and the circular-expander designs are exercised.
+    const reasoning =
+      Math.random() > 0.5
+        ? "Verified against the record and found consistent with the reported figures ([wikipedia.org](https://en.wikipedia.org/wiki/Fact-checking))."
+        : "Cross-checked across multiple outlets, which broadly agree on the substance ([reuters.com](https://www.reuters.com/fact-check), [apnews.com](https://apnews.com/hub/ap-fact-check), [wikipedia.org](https://en.wikipedia.org/wiki/Fact-checking)).";
     setDemoCards((cs) => [
       {
         id,
@@ -38,15 +58,15 @@ export default function MainPage() {
       ...cs,
     ]);
     window.setTimeout(() => {
-      setDemoCards((cs) => cs.map((c) => (c.id === id ? { ...c, status: verdict } : c)));
+      setDemoCards((cs) => cs.map((c) => (c.id === id ? { ...c, status: verdict, reasoning } : c)));
     }, 2200);
   };
 
   return (
     <div className="deck-page deck-page-3d">
       <header className="deck-header">
-        <span className="deck-wordmark font-array">pinto</span>
-        <button className="deck-settings" aria-label="Settings">
+        <span className="deck-wordmark font-array">ponoc</span>
+        <button className="deck-settings" aria-label="Settings" onClick={() => setSettingsOpen(true)}>
           <GearIcon />
         </button>
       </header>
@@ -57,6 +77,7 @@ export default function MainPage() {
         onAddDemoClaim={addDemoClaim}
         getAnalyser={getAnalyser}
       />
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} tally={tally} />
     </div>
   );
 }
