@@ -2,9 +2,9 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import type { CardStatus } from "../../lib/types";
+import type { CardStatus } from "@/shared/protocol";
 
-export interface LogBox {
+export interface VerdictBox {
   id: string;
   claimId: string;
   status: CardStatus;
@@ -13,15 +13,14 @@ export interface LogBox {
 const VERDICT_COLOR: Record<string, string> = {
   true: "#1C5334",
   false: "#8E1A1A",
-  error: "#8a8a8a",
   verifying: "#c9c9c9",
-  none: "#c9c9c9",
 };
 
-const TARGET_BOX = 14; // px — target square size; actual size divides width evenly
+const TARGET_BOX = 14; // px; the real size divides the width evenly
 const BOX_GAP = 1.5;
 
-export function SessionsGrid({ boxes }: { boxes: LogBox[] }) {
+// One box per verdict, filling left→right; each new row stacks above the last.
+export function VerdictGrid({ boxes }: { boxes: VerdictBox[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [perRow, setPerRow] = useState(1);
   const [boxSize, setBoxSize] = useState(TARGET_BOX);
@@ -31,11 +30,9 @@ export function SessionsGrid({ boxes }: { boxes: LogBox[] }) {
     if (!el) return;
     const measure = () => {
       const w = el.clientWidth;
-      const step = TARGET_BOX + BOX_GAP;
-      const count = Math.max(1, Math.floor((w + BOX_GAP) / step));
-      const size = (w - (count - 1) * BOX_GAP) / count;
+      const count = Math.max(1, Math.floor((w + BOX_GAP) / (TARGET_BOX + BOX_GAP)));
       setPerRow(count);
-      setBoxSize(size);
+      setBoxSize((w - (count - 1) * BOX_GAP) / count);
     };
     measure();
     const ro = new ResizeObserver(measure);
@@ -46,9 +43,7 @@ export function SessionsGrid({ boxes }: { boxes: LogBox[] }) {
   return (
     <div className="stage-grid" ref={ref}>
       <div className="grid-rows" style={{ gap: BOX_GAP }}>
-        {/* Boxes fill left→right; each new row stacks above the previous. */}
-        {chunk(boxes, perRow)
-          .slice()
+        {toRows(boxes, perRow)
           .reverse()
           .map((row, ri) => (
             <div key={ri} className="grid-row" style={{ gap: BOX_GAP }}>
@@ -75,14 +70,14 @@ export function SessionsGrid({ boxes }: { boxes: LogBox[] }) {
   );
 }
 
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
+function toRows(boxes: VerdictBox[], perRow: number): VerdictBox[][] {
+  const rows: VerdictBox[][] = [];
+  for (let i = 0; i < boxes.length; i += perRow) rows.push(boxes.slice(i, i + perRow));
+  return rows;
 }
 
-// Strong avalanche hash: adjacent ids produce wildly uncorrelated values, so
-// there is no readable order to which boxes flicker when.
+// Avalanche hash: neighbouring ids give unrelated values, so there's no visible
+// order to which boxes flicker when.
 function hash(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {

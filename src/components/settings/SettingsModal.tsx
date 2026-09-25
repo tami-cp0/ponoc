@@ -1,87 +1,70 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { authClient } from "@/client/auth-client";
+import { formatCredits } from "@/shared/credits";
+import { Dialog } from "../Dialog";
+import { CloseIcon } from "../icons";
+import { Button } from "../Button";
 
 interface Tally {
   truths: number;
   falses: number;
 }
 
-interface SettingsModalProps {
+export interface Account {
+  name: string;
+  email: string;
+}
+
+interface Props {
   open: boolean;
   onClose: () => void;
   tally: Tally;
+  account: Account;
+  credits: number;
+  onAddCredits: () => void;
 }
 
-// Settings surface. Uses the native <dialog> so the panel lands in the top
-// layer (escaping the deck's 3D transforms), traps focus, and closes on Esc
-// without our own key handling. The neumorphic material and rows are styled in
-// globals.css under .settings-*.
-export function SettingsModal({ open, onClose, tally }: SettingsModalProps) {
-  const ref = useRef<HTMLDialogElement>(null);
-
-  // Drive the dialog's open state imperatively — showModal()/close() are what
-  // put it in the top layer and render the ::backdrop; the `open` attribute
-  // alone does not.
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (open && !el.open) el.showModal();
-    else if (!open && el.open) el.close();
-  }, [open]);
-
+export function SettingsModal({ open, onClose, tally, account, credits, onAddCredits }: Props) {
   return (
-    <dialog
-      ref={ref}
-      className="settings-dialog"
-      onClose={onClose}
-      // Close when the backdrop (the dialog element itself, outside the card) is
-      // clicked. Clicks on the inner card stop at the panel and don't bubble.
-      onClick={(e) => {
-        if (e.target === ref.current) onClose();
-      }}
-    >
-      <div className="settings-panel">
-        <header className="settings-head">
-          <h2 className="settings-title font-array">Settings</h2>
-          <button className="settings-close" aria-label="Close settings" onClick={onClose}>
-            <CloseIcon />
-          </button>
-        </header>
+    <Dialog open={open} onClose={onClose} label="Settings">
+      <header className="settings-head">
+        <h2 className="settings-title font-array">Settings</h2>
+        <Button aria-label="Close settings" width={38} height={38} onClick={onClose}>
+          <CloseIcon />
+        </Button>
+      </header>
 
-        <div className="settings-body">
-          <AccountRow />
-          <StatsRow tally={tally} />
-          <BalanceRow />
-          <LogOutRow />
-        </div>
-
-        <footer className="settings-foot">
-          <span className="settings-wordmark font-array">ponoc</span>
-        </footer>
+      <div className="settings-body">
+        <AccountRow account={account} />
+        <StatsRow tally={tally} />
+        <BalanceRow credits={credits} onAddCredits={onAddCredits} />
+        <LogOutRow />
       </div>
-    </dialog>
+
+      <footer className="settings-foot">
+        <span className="settings-wordmark font-array">ponoc</span>
+      </footer>
+    </Dialog>
   );
 }
 
-// Guest identity placeholder — the seat a real account drops into once auth
-// exists. A carved monogram disc, not a decorative avatar.
-function AccountRow() {
+function AccountRow({ account }: { account: Account }) {
   return (
     <div className="settings-row settings-account">
       <span className="settings-avatar" aria-hidden>
-        G
+        {account.name.charAt(0).toUpperCase()}
       </span>
       <span className="settings-account-text">
-        <span className="settings-row-label">Guest</span>
-        <span className="settings-row-sub">Not signed in</span>
+        <span className="settings-row-label">{account.name}</span>
+        <span className="settings-row-sub">{account.email}</span>
       </span>
     </div>
   );
 }
 
-// The session's verdict tally — the same true/false the deck shows in green and
-// red, totalled. Two carved counters, tinted with the verdict colours.
 function StatsRow({ tally }: { tally: Tally }) {
   return (
     <div className="settings-row settings-stats">
@@ -103,55 +86,47 @@ function StatsRow({ tally }: { tally: Tally }) {
   );
 }
 
-// Credits + pay-as-you-go. Credits lead — usage is billed against them, and the
-// raw meter is never shown to the user. Dormant until billing exists: the row
-// keeps its place but drops to a flat recess and can't be pressed.
-function BalanceRow() {
+function BalanceRow({ credits, onAddCredits }: { credits: number; onAddCredits: () => void }) {
   return (
-    <div className="settings-row settings-soon" aria-disabled>
+    <div className="settings-row">
       <div className="settings-row-head">
         <span className="settings-row-label">Credits</span>
-        <span className="settings-soon-tag">Coming soon</span>
+        {credits <= 0 && <span className="settings-row-sub">Top up to keep listening</span>}
       </div>
       <div className="settings-balance">
         <div className="settings-balance-amount">
-          <span className="settings-meter-num">0</span>
+          <span className="settings-meter-num">{formatCredits(credits)}</span>
           <span className="settings-meter-unit">credits</span>
         </div>
-        <button className="settings-topup" disabled tabIndex={-1}>
+        <Button height={38} onClick={onAddCredits}>
           Add credits
-        </button>
+        </Button>
       </div>
-      <div className="settings-payg">
+      {/* Dormant until pay-as-you-go billing exists. */}
+      <div className="settings-payg settings-soon" aria-disabled>
         <span className="settings-payg-text">
           <span className="settings-row-label">Pay as you go</span>
           <span className="settings-row-sub">Keep going when your credits run out</span>
         </span>
-        <span className="settings-switch" aria-hidden />
+        <span className="settings-soon-tag">Coming soon</span>
       </div>
     </div>
   );
 }
 
-// Nothing to sign out of yet — dormant, same treatment as Balance.
 function LogOutRow() {
-  return (
-    <button className="settings-row settings-logout settings-soon" disabled tabIndex={-1}>
-      <span className="settings-row-label">Log out</span>
-      <span className="settings-soon-tag">Coming soon</span>
-    </button>
-  );
-}
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
 
-function CloseIcon() {
+  const logOut = async () => {
+    setPending(true);
+    await authClient.signOut();
+    router.push("/");
+  };
+
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M6 6l12 12M18 6L6 18"
-        stroke="currentColor"
-        strokeWidth="2.25"
-        strokeLinecap="round"
-      />
-    </svg>
+    <Button width="100%" onClick={logOut} disabled={pending}>
+      Log out
+    </Button>
   );
 }
