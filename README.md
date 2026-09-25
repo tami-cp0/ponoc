@@ -65,6 +65,26 @@ Without `RESEND_API_KEY`, magic links are printed to the server log instead of e
 | `npm test` | Unit tests (vitest) |
 | `npm run typecheck` / `npm run lint` | Type and lint checks |
 
+### With Docker
+
+```bash
+docker compose up --build   # Postgres, migrations, then the app on http://localhost:3000
+```
+
+`compose.yaml` runs a local Postgres and points `DATABASE_URL` at it; everything else comes from `.env`. The image runs with `NODE_ENV=production`, so `.env` must also set `RESEND_API_KEY` and `EMAIL_FROM`.
+
+To build for a deployment:
+
+```bash
+docker build -t ponoc .                                    # the app
+docker build --target migrate -t ponoc-migrate .
+docker run --rm -e DATABASE_URL=... ponoc-migrate          # before deploying code that needs it
+```
+
+- `SITE_URL` is a build argument because it's baked into static pages. It defaults to `https://ponoc.tech`; `docker compose` takes it from `.env` instead, so local runs keep `http://localhost:3000`. Set the same value at runtime too: the WebSocket origin check reads it.
+- Give the container at least 30 seconds to stop (`stop_grace_period`, or `terminationGracePeriodSeconds` on Kubernetes). Live sessions get up to 20 seconds to finish verifying and save usage.
+- The app is one long-lived process holding WebSockets. It needs a host that runs containers (Fly.io, Railway, Render, a VM), not serverless functions.
+
 ## How usage is priced
 
 Every live session is metered, and one row is written to `usage_record` per session. The meter counts four things, because these are what the providers bill for:

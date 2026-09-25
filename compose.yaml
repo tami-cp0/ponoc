@@ -1,0 +1,52 @@
+# Local stack: Postgres, a one-off migration, then the app on http://localhost:3000.
+# Secrets come from .env; DATABASE_URL is overridden to point at the db service.
+# To use Neon instead, delete the db service and the DATABASE_URL overrides.
+
+x-database-url: &database-url postgres://ponoc:ponoc@db:5432/ponoc
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ponoc
+      POSTGRES_PASSWORD: ponoc
+      POSTGRES_DB: ponoc
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ponoc -d ponoc"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        SITE_URL: ${SITE_URL:-https://ponoc.tech}
+    env_file: .env
+    environment:
+      DATABASE_URL: *database-url
+    ports:
+      - "3000:3000"
+    init: true
+    # Docker's default is 10s. Sessions get up to 20s to finish verifying and
+    # save usage (Session.ts DRAIN_TIMEOUT_MS), so give them room.
+    stop_grace_period: 30s
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:
