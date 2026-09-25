@@ -1,11 +1,9 @@
 import { ImageResponse } from "next/og";
 
-// Social share preview (X, LinkedIn, iMessage, etc.). Next serves this at
-// /opengraph-image and wires the meta tags automatically. Rendered on the edge
-// with ImageResponse, so it uses inline styles and a system font stack (the
-// local Array/Bebas faces aren't loaded here) tuned to echo the paper brand.
-export const runtime = "edge";
-export const alt = "ponoc, realtime claim validator";
+// Social share preview, served at /opengraph-image with the meta tags wired up
+// by Next. ImageResponse only understands inline styles, and the local fonts
+// aren't loaded here, so it uses a system font stack.
+export const alt = "ponoc, facts or cap";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -28,7 +26,7 @@ export default function OpengraphImage() {
         {/* Top row: wordmark + verdict dots */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ fontSize: 30, letterSpacing: 6, color: "#565656", fontFamily: "monospace" }}>
-            REALTIME CLAIM VALIDATOR
+            FACTS OR CAP?
           </div>
           <div style={{ display: "flex", gap: 14 }}>
             <div style={{ width: 22, height: 22, borderRadius: 999, background: "#16a34a" }} />

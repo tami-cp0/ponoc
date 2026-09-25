@@ -13,8 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Instrument Serif italic — the editorial accent on landing headlines, the one
-// Hirael move: select words drop to a serif italic against the sans headline.
+// The serif-italic accent for select words in landing headlines.
 const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument",
   subsets: ["latin"],
@@ -49,21 +48,18 @@ const expose = localFont({
   ],
 });
 
-// Absolute base for OG/Twitter image URLs. Set NEXT_PUBLIC_SITE_URL in prod; the
-// localhost fallback keeps dev previews working.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+// Absolute base for OG/Twitter image URLs.
+const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: {
-    default: "ponoc, realtime claim validator",
-    template: "%s | ponoc",
-  },
+  title: "Ponoc",
   description:
-    "ponoc is a realtime claim validator. It listens to what you say, verifies it against the record, and rules each claim true or false, live.",
+    "ponoc calls facts or cap, live. It listens to what you say, checks it against the web, and rules each claim true or false.",
   keywords: [
     "realtime fact-checking",
-    "claim validator",
+    "facts or cap",
+    "fact checker",
     "voice fact checking",
     "live fact checker",
     "speech verification",
@@ -75,15 +71,13 @@ export const metadata: Metadata = {
     type: "website",
     url: siteUrl,
     siteName: "ponoc",
-    title: "ponoc, realtime claim validator",
-    description:
-      "Listens to what you say, verifies it against the record, and rules each claim true or false, live.",
+    title: "ponoc, facts or cap",
+    description: "ponoc calls facts or cap, live. It listens to what you say, checks it against the web, and rules each claim true or false.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ponoc, realtime claim validator",
-    description:
-      "Listens to what you say, verifies it against the record, and rules each claim true or false, live.",
+    title: "ponoc, facts or cap",
+    description: "ponoc calls facts or cap, live. It listens to what you say, checks it against the web, and rules each claim true or false.",
     creator: "@tami_cp0",
   },
   robots: {
