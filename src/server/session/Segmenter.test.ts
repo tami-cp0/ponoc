@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Segmenter } from "./segment";
+import { Segmenter } from "./Segmenter";
 
 describe("Segmenter", () => {
   it("splits a segment into one utterance per sentence", () => {
