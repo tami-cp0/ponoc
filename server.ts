@@ -1,45 +1,53 @@
 import { createServer } from "node:http";
 import next from "next";
-import { WebSocketServer } from "ws";
-import { OpenAIProvider } from "./src/lib/llm/openai";
-import { Session } from "./src/lib/session";
-import type { ServerEvent } from "./src/lib/types";
+import { getUser } from "./src/server/auth";
+import { closeDb } from "./src/server/db";
+import { assertEnv, env } from "./src/server/env";
+import { createGateway } from "./src/server/gateway";
+import { OpenAIProvider } from "./src/server/llm/openai";
+import { Session } from "./src/server/session/Session";
+import { getBalanceMicros } from "./src/server/usage/credits";
+import { createUsageRecord, saveUsage } from "./src/server/usage/store";
 
-const port = parseInt(process.env.PORT || "3000", 10);
-const dev = process.env.NODE_ENV !== "production";
-const app = next({ dev });
-const handle = app.getRequestHandler();
+assertEnv();
+const prices = env.prices;
+
+const app = next({ dev: !env.isProduction });
 
 app.prepare().then(() => {
-  const upgrade = app.getUpgradeHandler();
-  const server = createServer((req, res) => handle(req, res));
-  const wss = new WebSocketServer({ noServer: true });
+  const handleRequest = app.getRequestHandler();
+  const handleNextUpgrade = app.getUpgradeHandler();
   const provider = new OpenAIProvider();
 
+  const gateway = createGateway({
+    siteUrl: env.siteUrl,
+    getUser,
+    getBalance: getBalanceMicros,
+    createSession: (send) => new Session(provider, send, prices),
+    usageStore: { create: createUsageRecord, save: saveUsage },
+  });
+
+  const server = createServer((req, res) => handleRequest(req, res));
+
   server.on("upgrade", (req, socket, head) => {
-    if (req.url === "/ws") {
-      wss.handleUpgrade(req, socket, head, (ws) => wss.emit("connection", ws));
-    } else {
-      upgrade(req, socket, head);
-    }
+    if (req.url?.split("?")[0] === "/ws") gateway.handleUpgrade(req, socket, head);
+    else handleNextUpgrade(req, socket, head);
   });
 
-  wss.on("connection", (ws) => {
-    const send = (event: ServerEvent) => {
-      if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(event));
-    };
-    const session = new Session(provider, send);
-
-    session.start().catch(() => send({ type: "status", state: "stopped" }));
-
-    ws.on("message", (data, isBinary) => {
-      if (isBinary) session.audio(data as Buffer);
-    });
-    ws.on("close", () => session.stop());
-    ws.on("error", () => session.stop());
+  server.listen(env.port, () => {
+    console.log(`> Ready on http://localhost:${env.port}`);
   });
 
-  server.listen(port, () => {
-    console.log(`> Ready on http://localhost:${port}`);
-  });
+  let shuttingDown = false;
+  const shutdown = async () => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log("> Shutting down…");
+    server.close();
+    await gateway.shutdown();
+    await closeDb();
+    process.exit(0);
+  };
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 });
