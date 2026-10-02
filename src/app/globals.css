@@ -707,7 +707,7 @@ body {
 .settings-panel {
   position: relative;
   width: min(92vw, 400px);
-  border-radius: 26px;
+  border-radius: 16px;
   background: var(--bg);
   padding: 1.25rem 1.25rem 0.9rem;
   box-shadow:

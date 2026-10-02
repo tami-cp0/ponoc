@@ -217,7 +217,7 @@ export function ClaimDeck({ cards, running, connecting, verdictHistory, onToggle
               .reverse()}
           </AnimatePresence>
 
-          {deck.length === 0 && <div className="deck-empty">No claims</div>}
+          {deck.length === 0 && <div className="deck-empty font-array">No claims</div>}
         </div>
 
         <button className="deck-nav" onClick={sendToSession} disabled={!current} aria-label="Store">
