@@ -33,6 +33,7 @@ const exitVariants = {
 interface Props {
   cards: Card[];
   running: boolean;
+  stopping: boolean;
   connecting: boolean;
   // Every past verdict, oldest first (true = TRUE).
   verdictHistory: boolean[];
@@ -40,7 +41,7 @@ interface Props {
   getAnalyser: () => AnalyserNode | null;
 }
 
-export function ClaimDeck({ cards, running, connecting, verdictHistory, onToggle, getAnalyser }: Props) {
+export function ClaimDeck({ cards, running, stopping, connecting, verdictHistory, onToggle, getAnalyser }: Props) {
   const [deck, setDeck] = useState<Card[]>([]);
   const [session, setSession] = useState<Card[]>([]);
   const [verdicts, setVerdicts] = useState<VerdictBox[]>(() =>
@@ -139,6 +140,7 @@ export function ClaimDeck({ cards, running, connecting, verdictHistory, onToggle
       <DeckControls
         running={running}
         connecting={connecting}
+        stopping={stopping}
         onToggle={onToggle}
         onReset={reset}
         getAnalyser={getAnalyser}

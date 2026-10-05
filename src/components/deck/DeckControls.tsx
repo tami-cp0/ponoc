@@ -12,19 +12,21 @@ const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 interface Props {
   running: boolean;
   connecting: boolean;
+  // The app is stopping the session itself (credits ran out): show Stop pressed.
+  stopping: boolean;
   onToggle: () => void;
   onReset: () => void;
   getAnalyser: () => AnalyserNode | null;
 }
 
-export function DeckControls({ running, connecting, onToggle, onReset, getAnalyser }: Props) {
+export function DeckControls({ running, connecting, stopping, onToggle, onReset, getAnalyser }: Props) {
   const open = running || connecting;
   // Closing waits for the visualizer to sink first.
   const gap = open ? { duration: 0.22, ease: EASE } : { duration: 0.22, ease: EASE, delay: 0.3 };
 
   return (
     <div className="stage-controls">
-      <Button height="var(--control-height)" squareEdge={open ? null : "right"} onClick={onToggle}>
+      <Button height="var(--control-height)" squareEdge={open ? null : "right"} pressed={stopping} onClick={onToggle}>
         {open ? "Stop" : "Start"}
       </Button>
 

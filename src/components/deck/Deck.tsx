@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function Deck({ account, credits: initialCredits, verdictHistory, showWelcome }: Props) {
-  const { cards, status, credits, ranOut, notice, start, stop, dismissRanOut, dismissNotice, getAnalyser } =
+  const { cards, status, stopping, credits, ranOut, notice, start, stop, dismissRanOut, dismissNotice, getAnalyser } =
     useLiveSession(initialCredits);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(showWelcome);
@@ -76,6 +76,7 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
       <ClaimDeck
         cards={cards}
         running={running}
+        stopping={stopping}
         connecting={connecting}
         verdictHistory={verdictHistory}
         onToggle={toggle}
@@ -98,7 +99,7 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
         }}
       />
       <LiveNotice message={notice} onDismiss={dismissNotice} />
-      <OutOfCredits open={ranOut} tally={tally} onTopUp={openCheckout} onClose={dismissRanOut} />
+      <OutOfCredits open={ranOut} onTopUp={openCheckout} onClose={dismissRanOut} />
       <CheckoutDialog open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
     </div>
   );

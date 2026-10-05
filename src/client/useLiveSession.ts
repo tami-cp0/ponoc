@@ -15,6 +15,9 @@ import { openMicrophone, type Microphone } from "./microphone";
 
 export type Status = "idle" | "connecting" | LiveStatus;
 
+// How long Stop shows pressed when the session stops itself.
+const AUTO_STOP_PRESS_MS = 220;
+
 const NOTICE = {
   micBlocked: "Microphone blocked. Allow it in your browser, then press Start.",
   noMic: "No microphone found.",
@@ -47,6 +50,7 @@ export function useLiveSession(initialCredits: number) {
   const [status, setStatus] = useState<Status>("idle");
   const [credits, setCredits] = useState(initialCredits);
   const [ranOut, setRanOut] = useState(false);
+  const [stopping, setStopping] = useState(false);
   // Why a session stopped without the user pressing Stop, shown as a short notice.
   const [notice, setNotice] = useState<string | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -112,12 +116,21 @@ export function useLiveSession(initialCredits: number) {
     };
     socket.onclose = (e) => {
       if (socketRef.current !== socket) return;
+      if (e.code === CLOSE_OUT_OF_CREDITS) {
+        // The mic goes off now; Stop then visibly presses before the notice shows.
+        release();
+        setCredits(0);
+        setStopping(true);
+        setTimeout(() => {
+          setStopping(false);
+          setStatus("stopped");
+          setRanOut(true);
+        }, AUTO_STOP_PRESS_MS);
+        return;
+      }
       stop();
       if (e.code === CLOSE_UNAUTHORIZED) {
         router.push("/login");
-      } else if (e.code === CLOSE_OUT_OF_CREDITS) {
-        setCredits(0);
-        setRanOut(true);
       } else if (e.code === CLOSE_REPLACED) {
         setNotice(NOTICE.replaced);
       } else {
@@ -139,14 +152,14 @@ export function useLiveSession(initialCredits: number) {
     // The socket may have closed while the permission prompt was open.
     if (socketRef.current !== socket) mic.stop();
     else micRef.current = mic;
-  }, [applyEvent, stop, router]);
+  }, [applyEvent, release, stop, router]);
 
   const getAnalyser = useCallback(() => micRef.current?.analyser ?? null, []);
 
   const dismissRanOut = useCallback(() => setRanOut(false), []);
   const dismissNotice = useCallback(() => setNotice(null), []);
 
-  return { cards, status, credits, ranOut, notice, start, stop, dismissRanOut, dismissNotice, getAnalyser };
+  return { cards, status, stopping, credits, ranOut, notice, start, stop, dismissRanOut, dismissNotice, getAnalyser };
 }
 
 function withVerdict(card: Card, result: Verdict): Card {

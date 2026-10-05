@@ -14,6 +14,8 @@ interface Props {
   radius?: number;
   // A straight side, for buttons that join into one pill (start / reset).
   squareEdge?: "left" | "right" | null;
+  // Shows the button held down, as if clicked, when the app presses it itself.
+  pressed?: boolean;
 }
 
 export function Button({
@@ -27,6 +29,7 @@ export function Button({
   height,
   radius,
   squareEdge,
+  pressed,
 }: Props) {
   const style = {
     width,
@@ -52,6 +55,7 @@ export function Button({
       disabled={disabled}
       aria-label={ariaLabel}
       data-square={squareEdge ?? undefined}
+      data-pressed={pressed || undefined}
     >
       {children}
     </button>

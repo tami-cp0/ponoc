@@ -504,10 +504,12 @@ body {
     0 3px 5px hsla(0, 0%, 0%, 0.16),
     inset 0 -3px 5px hsla(0, 0%, 0%, 0.16);
 }
-.btn:not(:disabled):active {
+.btn:not(:disabled):active,
+.btn[data-pressed] {
   transform: translateY(2px);
 }
-.btn:not(:disabled):active::before {
+.btn:not(:disabled):active::before,
+.btn[data-pressed]::before {
   opacity: 0;
 }
 .btn:disabled {
@@ -941,22 +943,17 @@ body {
 }
 
 .spent {
-  padding: 1.75rem 1.5rem 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: auto;
+  max-width: 92vw;
+  padding: 0.9rem 0.9rem 0.9rem 1.4rem;
 }
-.spent-title {
-  font-size: 1.3rem;
-  letter-spacing: 0.01em;
+.spent-text {
+  font-size: 0.95rem;
   color: var(--fg);
-}
-.spent-lede {
-  margin-top: 0.5rem;
-  font-size: 0.92rem;
-  line-height: 1.55;
-  color: var(--muted);
-  text-wrap: pretty;
-}
-.spent-tally {
-  margin-top: 1rem;
 }
 
 .checkout {
