@@ -3,9 +3,7 @@
 import { useMemo, useState } from "react";
 import { dismissWelcome } from "@/app/app/actions";
 import { useLiveSession } from "@/client/useLiveSession";
-import { LOW_CREDITS } from "@/shared/credits";
 import { CheckoutDialog } from "../credits/CheckoutDialog";
-import { LowCredits } from "../credits/LowCredits";
 import { OutOfCredits } from "../credits/OutOfCredits";
 import { WelcomeGift } from "../credits/WelcomeGift";
 import { GearIcon } from "../icons";
@@ -63,7 +61,6 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
     <div className="deck-page deck-page-3d">
       <header className="deck-header">
         <span className="deck-wordmark font-array">ponoc</span>
-        {credits < LOW_CREDITS && <LowCredits credits={credits} onTopUp={openCheckout} />}
         <Button
           aria-label="Settings"
           width="var(--gear-size)"

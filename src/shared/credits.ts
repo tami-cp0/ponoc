@@ -3,7 +3,6 @@ export const CREDIT_USD = 0.2;
 export const TRIAL_CREDITS = 5;
 export const MIN_PURCHASE_USD = 2;
 export const MAX_PURCHASE_USD = 500;
-export const LOW_CREDITS = 1;
 
 export interface CreditPack {
   id: string;
