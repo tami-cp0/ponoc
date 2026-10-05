@@ -7,6 +7,7 @@ import { db, schema } from "../db";
 import { CLIENT_IP_HEADER } from "./client-ip";
 import { Cooldown } from "./cooldown";
 import { sendMagicLinkEmail } from "./email";
+import { MAGIC_LINK_MINUTES } from "./magic-link-email";
 import { env } from "../env";
 import { notify } from "../notify";
 import { grantTrial } from "../usage/credits";
@@ -41,7 +42,7 @@ function createAuth() {
     },
     plugins: [
       magicLink({
-        expiresIn: 5 * 60,
+        expiresIn: MAGIC_LINK_MINUTES * 60,
         sendMagicLink: ({ email, url }) => {
           const wait = magicLinkCooldown.take(email.trim().toLowerCase());
           if (wait > 0) {

@@ -1,4 +1,5 @@
 import { env } from "../env";
+import { magicLinkEmail } from "./magic-link-email";
 
 export async function sendMagicLinkEmail(to: string, url: string): Promise<void> {
   if (!env.resendApiKey && !env.isProduction) {
@@ -15,9 +16,7 @@ export async function sendMagicLinkEmail(to: string, url: string): Promise<void>
     body: JSON.stringify({
       from: env.emailFrom,
       to,
-      subject: "Your ponoc sign-in link",
-      text: `Sign in to ponoc:\n\n${url}\n\nThis link expires in 5 minutes. If you didn't ask for it, you can ignore this email.`,
-      html: `<p>Sign in to ponoc:</p><p><a href="${url}">Sign in</a></p><p>This link expires in 5 minutes. If you didn't ask for it, you can ignore this email.</p>`,
+      ...magicLinkEmail(url),
     }),
   });
 
