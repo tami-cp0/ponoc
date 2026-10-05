@@ -14,10 +14,10 @@ class PCMWorklet extends AudioWorkletProcessor {
     const channel = inputs[0]?.[0];
     if (!channel) return true;
 
-    const outLength = Math.floor((channel.length - this.carry) / this.ratio);
-
+    // pos is where the next output sample falls; carry is how far past this
+    // block it landed, so the next block picks up from there.
     let pos = this.carry;
-    for (let i = 0; i < outLength; i++) {
+    while (pos < channel.length) {
       const sample = channel[Math.floor(pos)];
       const clamped = Math.max(-1, Math.min(1, sample));
       this.batch[this.filled++] = clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff;

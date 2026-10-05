@@ -22,6 +22,17 @@ beforeAll(async () => {
   await import("../../public/pcm-worklet.js");
 });
 
+it("takes every third sample at 48 kHz, across render quanta", () => {
+  posted.length = 0;
+  const worklet = new Processor({ processorOptions: { targetRate: 16000 } });
+  // A ramp that never repeats within a chunk, so any skipped or zeroed sample shows.
+  const input = Float32Array.from({ length: 4800 }, (_, i) => (i + 1) / 10_000);
+  for (let i = 0; i < input.length; i += 128) worklet.process([[input.subarray(i, i + 128)]]);
+
+  const expected = Int16Array.from({ length: 1600 }, (_, k) => input[k * 3] * 0x7fff);
+  expect(new Int16Array(posted[0])).toEqual(expected);
+});
+
 it("keeps posting 100 ms chunks after the first", () => {
   posted.length = 0;
   const worklet = new Processor({ processorOptions: { targetRate: 16000 } });
