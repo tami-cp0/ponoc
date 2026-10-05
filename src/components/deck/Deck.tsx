@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { dismissWelcome } from "@/app/app/actions";
 import { useLiveSession } from "@/client/useLiveSession";
+import { useUrlDialog } from "@/client/useUrlDialog";
 import { CheckoutDialog } from "../credits/CheckoutDialog";
 import { OutOfCredits } from "../credits/OutOfCredits";
 import { WelcomeGift } from "../credits/WelcomeGift";
@@ -22,9 +23,8 @@ interface Props {
 export function Deck({ account, credits: initialCredits, verdictHistory, showWelcome }: Props) {
   const { cards, status, stopping, credits, ranOut, notice, start, stop, dismissRanOut, dismissNotice, getAnalyser } =
     useLiveSession(initialCredits);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const dialog = useUrlDialog();
   const [welcomeOpen, setWelcomeOpen] = useState(showWelcome);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const running = status === "listening";
   const connecting = status === "connecting";
@@ -32,9 +32,8 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
   const listen = () => void start();
 
   const openCheckout = () => {
-    setSettingsOpen(false);
     dismissRanOut();
-    setCheckoutOpen(true);
+    dialog.open("checkout");
   };
 
   const toggle = () => {
@@ -65,7 +64,7 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
           aria-label="Settings"
           width="var(--gear-size)"
           height="var(--gear-size)"
-          onClick={() => setSettingsOpen(true)}
+          onClick={() => dialog.open("settings")}
         >
           <GearIcon />
         </Button>
@@ -80,8 +79,8 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
         getAnalyser={getAnalyser}
       />
       <SettingsModal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        open={dialog.current === "settings"}
+        onClose={() => dialog.close("settings")}
         tally={tally}
         account={account}
         credits={credits}
@@ -97,7 +96,7 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
       />
       <LiveNotice message={notice} onDismiss={dismissNotice} />
       <OutOfCredits open={ranOut} onTopUp={openCheckout} onClose={dismissRanOut} />
-      <CheckoutDialog open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
+      <CheckoutDialog open={dialog.current === "checkout"} onClose={() => dialog.close("checkout")} />
     </div>
   );
 }

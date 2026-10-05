@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
+import { useUrlDialog } from "@/client/useUrlDialog";
 import type { CardStatus } from "@/shared/protocol";
 import { Dialog } from "../Dialog";
 
@@ -26,7 +27,7 @@ export function VerdictGrid({ boxes }: { boxes: VerdictBox[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [perRow, setPerRow] = useState(1);
   const [boxSize, setBoxSize] = useState(TARGET_BOX);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const dialog = useUrlDialog();
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -52,7 +53,7 @@ export function VerdictGrid({ boxes }: { boxes: VerdictBox[] }) {
           style={{ gap: BOX_GAP }}
           disabled={boxes.length === 0}
           aria-label="Show every verdict"
-          onClick={() => setHistoryOpen(true)}
+          onClick={() => dialog.open("history")}
         >
           {toRows(boxes, perRow)
             .slice(-MAX_ROWS)
@@ -82,8 +83,8 @@ export function VerdictGrid({ boxes }: { boxes: VerdictBox[] }) {
 
       {/* Every verdict ever, newest first, in flat colour: there can be thousands. */}
       <Dialog
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
+        open={dialog.current === "history"}
+        onClose={() => dialog.close("history")}
         label="Every verdict"
         className="verdict-history"
       >
