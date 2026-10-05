@@ -24,6 +24,10 @@ function createAuth() {
       expiresIn: 7 * DAY,
       updateAge: DAY,
     },
+    // Errors that can't be traced to a sign-in attempt (e.g. a duplicated Google
+    // callback whose state was already used) land on /login, which sends anyone
+    // already signed in on to /app.
+    onAPIError: { errorURL: "/login" },
     // Rate limits are keyed by client IP, which the auth route works out (see client-ip.ts).
     advanced: {
       ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
