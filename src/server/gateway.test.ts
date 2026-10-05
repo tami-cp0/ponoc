@@ -52,12 +52,14 @@ let gateway: Gateway;
 let url: string;
 let sessions: FakeSession[];
 let saved: { recordId: string; usage: UsageSnapshot }[];
+let finished: { userId: string; ranOut: boolean }[];
 // Balance in micro-credits per user; anyone not listed has plenty.
 let balances: Record<string, number>;
 
 async function start() {
   sessions = [];
   saved = [];
+  finished = [];
   balances = balances ?? {};
   gateway = createGateway({
     siteUrl: SITE,
@@ -76,6 +78,10 @@ async function start() {
       create: async (userId) => `record-${userId}`,
       save: async (recordId, usage) => {
         saved.push({ recordId, usage });
+      },
+      finish: async (recordId, userId, usage, ranOut) => {
+        saved.push({ recordId, usage });
+        finished.push({ userId, ranOut });
       },
     },
   });
@@ -194,6 +200,7 @@ describe("gateway", () => {
 
     await gateway.shutdown();
     expect(sessions[0].closed).toBe(true);
+    expect(finished).toEqual([{ userId: "a", ranOut: false }]);
     expect(saved.at(-1)).toEqual({
       recordId: "record-a",
       usage: { ...EMPTY_USAGE, audioSeconds: 150, creditsMicros: 150 },
@@ -243,5 +250,7 @@ describe("gateway", () => {
 
     expect(await closed).toBe(CLOSE_OUT_OF_CREDITS);
     expect(received).toContainEqual({ type: "credits", balance: 0 });
+    await gateway.shutdown();
+    expect(finished).toEqual([{ userId: "a", ranOut: true }]);
   });
 });

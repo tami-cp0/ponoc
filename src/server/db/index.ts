@@ -1,15 +1,15 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { account } from "./account";
-import { creditGrant } from "./credit-grant";
+import { liveSession } from "./live-session";
+import { notification } from "./notification";
 import { session } from "./session";
-import { usageRecord } from "./usage-record";
 import { user } from "./user";
 import { verification } from "./verification";
 
-export { account, creditGrant, session, usageRecord, user, verification };
+export { account, liveSession, notification, session, user, verification };
 
-export const schema = { account, creditGrant, session, usageRecord, user, verification };
+export const schema = { account, liveSession, notification, session, user, verification };
 
 // The pool connects lazily, on the first query, so importing this during
 // `next build` needs no database. server.ts checks DATABASE_URL at startup.

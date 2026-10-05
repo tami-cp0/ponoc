@@ -1,15 +1,15 @@
 import { asc, eq } from "drizzle-orm";
-import { db, usageRecord } from "../db";
+import { db, liveSession } from "../db";
 
 // Every verdict the user has ever had, oldest first (true = TRUE card).
-// usage_record keeps counts per session, not the order within one, so each
+// live_session keeps counts per session, not the order within one, so each
 // session's falses are spread evenly among its trues.
 export async function getVerdictHistory(userId: string): Promise<boolean[]> {
   const sessions = await db
-    .select({ trues: usageRecord.claimsTrue, falses: usageRecord.claimsFalse })
-    .from(usageRecord)
-    .where(eq(usageRecord.userId, userId))
-    .orderBy(asc(usageRecord.createdAt));
+    .select({ trues: liveSession.claimsTrue, falses: liveSession.claimsFalse })
+    .from(liveSession)
+    .where(eq(liveSession.userId, userId))
+    .orderBy(asc(liveSession.startedAt));
 
   return sessions.flatMap((s) => spreadVerdicts(s.trues, s.falses));
 }

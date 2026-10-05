@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Deck } from "@/components/deck/Deck";
 import { getUser } from "@/server/auth";
-import { getBalanceMicros, hasUnseenTrial } from "@/server/usage/credits";
+import { getBalanceMicros, hasUnseenWelcome } from "@/server/usage/credits";
 import { getVerdictHistory } from "@/server/usage/history";
 
 export default async function AppPage() {
@@ -11,7 +11,7 @@ export default async function AppPage() {
 
   const [balance, showWelcome, verdictHistory] = await Promise.all([
     getBalanceMicros(user.id),
-    hasUnseenTrial(user.id),
+    hasUnseenWelcome(user.id),
     getVerdictHistory(user.id),
   ]);
 

@@ -22,6 +22,8 @@ export interface GatewayOptions {
   usageStore: {
     create: (userId: string) => Promise<string>;
     save: (recordId: string, usage: UsageSnapshot) => Promise<void>;
+    // The final save, once the session has ended.
+    finish: (recordId: string, userId: string, usage: UsageSnapshot, ranOut: boolean) => Promise<void>;
   };
   flushIntervalMs?: number;
 }
@@ -113,6 +115,7 @@ export function createGateway(options: GatewayOptions): Gateway {
 
     // Keeps the client's balance current and stops the session when it hits zero.
     let lastSentBalance = -1;
+    let ranOut = false;
     const budget = setInterval(() => {
       const remaining = balance - session.usage().creditsMicros;
       const shown = Math.round(Math.max(0, remaining) / 10_000) / 100;
@@ -120,7 +123,10 @@ export function createGateway(options: GatewayOptions): Gateway {
         lastSentBalance = shown;
         send({ type: "credits", balance: shown });
       }
-      if (remaining <= 0) ws.close(CLOSE_OUT_OF_CREDITS, "out of credits");
+      if (remaining <= 0) {
+        ranOut = true;
+        ws.close(CLOSE_OUT_OF_CREDITS, "out of credits");
+      }
     }, BUDGET_CHECK_MS);
 
     session.start().catch((err: Error) => {
@@ -141,7 +147,11 @@ export function createGateway(options: GatewayOptions): Gateway {
         clearInterval(timer);
         clearInterval(budget);
         if (liveByUser.get(user.id)?.ws === ws) liveByUser.delete(user.id);
-        session.close().then(flush).finally(resolve);
+        const finish = () =>
+          recordId
+            .then((id) => options.usageStore.finish(id, user.id, session.usage(), ranOut))
+            .catch((err: Error) => console.error("usage save failed:", err.message));
+        session.close().then(finish).finally(resolve);
       };
       ws.on("close", end);
       ws.on("error", end);

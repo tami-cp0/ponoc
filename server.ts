@@ -7,7 +7,7 @@ import { createGateway } from "./src/server/gateway";
 import { OpenAIProvider } from "./src/server/llm/openai";
 import { Session } from "./src/server/session/Session";
 import { getBalanceMicros } from "./src/server/usage/credits";
-import { createUsageRecord, saveUsage } from "./src/server/usage/store";
+import { finishLiveSession, saveUsage, startLiveSession } from "./src/server/usage/store";
 
 assertEnv();
 const prices = env.prices;
@@ -24,7 +24,7 @@ app.prepare().then(() => {
     getUser,
     getBalance: getBalanceMicros,
     createSession: (send) => new Session(provider, send, prices),
-    usageStore: { create: createUsageRecord, save: saveUsage },
+    usageStore: { create: startLiveSession, save: saveUsage, finish: finishLiveSession },
   });
 
   const server = createServer((req, res) => handleRequest(req, res));

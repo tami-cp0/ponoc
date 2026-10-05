@@ -84,7 +84,7 @@ The app runs on [Railway](https://railway.com), built from the `Dockerfile`. Eve
 
 ## How usage is priced
 
-Every live session is metered, and one row is written to `usage_record` per session. The meter counts four things, because these are what the providers bill for:
+Every live session is metered, and one row is written to `live_session` per session. The meter counts four things, because these are what the providers bill for:
 
 | What | Billed by | Env variable | Current value |
 |---|---|---|---|
@@ -124,12 +124,12 @@ Illustrative numbers for a minute of speech that produces 8 utterances and 2 che
 | Charged (× 2 markup) | | $0.08128 |
 | **Credits** (÷ $0.20) | | **≈ 0.41 credits** |
 
-These token counts are illustrative, not measured. Real cost per minute swings widely with how many checkable claims are said, so the product never shows minute estimates. Measure real rates from `usage_record` instead.
+These token counts are illustrative, not measured. Real cost per minute swings widely with how many checkable claims are said, so the product never shows minute estimates. Measure real rates from `live_session` instead.
 
 ### Balance, trial and packs
 
 - Every new account gets **5 free credits** ($1 of retail usage), granted when the account is created.
-- A user's balance is everything granted (`credit_grant`) minus everything used (`usage_record.credits_micros`). There is no stored balance to drift out of sync.
+- A user's balance is `user.credits`, in plain credits. Each session's spending is deducted from it as the session is saved, and recorded in `live_session.credits_used`. To change someone's balance, edit `user.credits` directly.
 - A session can't start at zero, and stops when the balance runs out mid-session (close code `4402`). Claims already being checked still finish, so a balance can end slightly below zero.
 - Checkout offers three packs, defined in [`src/shared/credits.ts`](src/shared/credits.ts): $2 → 10 credits, $10 → 55 (+10% bonus), $20 → 120 (+20% bonus), plus a custom amount (whole dollars, $2 to $500, at the base rate of 5 credits per dollar, no bonus). The checkout UI ends at "Continue to payment"; payment processing is handled separately.
 
@@ -139,12 +139,12 @@ Payment processing is built separately. The UI side stops at checkout:
 
 - [`CheckoutDialog`](src/components/credits/CheckoutDialog.tsx) takes an `onContinue(selection)` prop that is not wired up yet. `selection` is `{ packId, usd, credits }`, where `packId` is a pack id or `"custom"`. It's rendered in [`Deck`](src/components/deck/Deck.tsx).
 - Packs live in [`src/shared/credits.ts`](src/shared/credits.ts).
-- Credits reach an account as rows in `credit_grant` ([schema](src/server/db/credit-grant.ts)). The balance picks them up automatically.
+- A purchase adds to `user.credits` ([schema](src/server/db/user.ts)) and should log a `credits_topped_up` notification (see [`notify`](src/server/notify.ts)).
 - Purchases are non-refundable except where the law requires otherwise, and purchased credits never expire (see the Terms at `/legal#terms`).
 
 ### Storage
 
-Money is stored as whole numbers of millionths (`cost_micros`, `credits_micros`), because floating-point numbers can't hold cents exactly and would drift over many additions. Both cost and credits are stored, so changing `MARKUP` later doesn't rewrite what past sessions were charged.
+Money is stored as exact decimals with six places (`numeric(14, 6)`: `user.credits`, `live_session.cost_usd`, `live_session.credits_used`), so it reads plainly and never drifts the way floating-point numbers do. In code, amounts are handled as whole millionths ("micros") and balances are changed in SQL, so the arithmetic stays exact. Both cost and credits are stored, so changing `MARKUP` later doesn't rewrite what past sessions were charged.
 
 ### Changing the numbers
 
@@ -158,12 +158,18 @@ Money is stored as whole numbers of millionths (`cost_micros`, `credits_micros`)
 SELECT count(*) AS sessions, sum(audio_seconds) / 60.0 AS minutes,
        sum(input_tokens) AS input_tokens, sum(output_tokens) AS output_tokens,
        sum(claims_true) AS true_verdicts, sum(claims_false) AS false_verdicts,
-       sum(cost_micros) / 1e6 AS cost_usd, sum(credits_micros) / 1e6 AS credits
-FROM usage_record WHERE user_id = $1;
+       sum(cost_usd) AS cost_usd, sum(credits_used) AS credits
+FROM live_session WHERE user_id = $1;
 
 -- The same, per week
-SELECT date_trunc('week', created_at) AS week, count(*) AS sessions,
-       sum(credits_micros) / 1e6 AS credits
-FROM usage_record WHERE user_id = $1
+SELECT date_trunc('week', started_at) AS week, count(*) AS sessions,
+       sum(credits_used) AS credits
+FROM live_session WHERE user_id = $1
 GROUP BY week ORDER BY week;
+
+-- Set a user's balance
+UPDATE "user" SET credits = 0.1 WHERE email = 'someone@example.com';
+
+-- Recent account activity (sign-ups, sign-ins, credits, sessions)
+SELECT created_at, email, type, message FROM notification ORDER BY created_at DESC LIMIT 50;
 ```

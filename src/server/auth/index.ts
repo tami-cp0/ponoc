@@ -8,6 +8,7 @@ import { CLIENT_IP_HEADER } from "./client-ip";
 import { Cooldown } from "./cooldown";
 import { sendMagicLinkEmail } from "./email";
 import { env } from "../env";
+import { notify } from "../notify";
 import { grantTrial } from "../usage/credits";
 
 const DAY = 60 * 60 * 24;
@@ -56,6 +57,7 @@ function createAuth() {
       user: {
         create: {
           after: async (created) => {
+            await notify(created.id, "signed_up", "Created an account");
             await grantTrial(created.id);
           },
         },
@@ -63,10 +65,18 @@ function createAuth() {
       session: {
         create: {
           // One sign-in per user: a new session signs out every other device.
-          after: async (created) => {
+          after: async (created, ctx) => {
             await db
               .delete(schema.session)
               .where(and(eq(schema.session.userId, created.userId), ne(schema.session.id, created.id)));
+            const method = ctx?.path.includes("magic-link") ? "a magic link" : "Google";
+            await notify(created.userId, "signed_in", `Signed in with ${method}`);
+          },
+        },
+        delete: {
+          // Sessions are also deleted when they expire; only count real sign-outs.
+          after: async (deleted, ctx) => {
+            if (ctx?.path === "/sign-out") await notify(deleted.userId, "signed_out", "Signed out");
           },
         },
       },

@@ -1,33 +1,31 @@
-import { and, eq, isNull, sum } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { TRIAL_CREDITS } from "@/shared/credits";
-import { creditGrant, db, usageRecord } from "../db";
+import { db, user } from "../db";
+import { notify } from "../notify";
 
 export async function grantTrial(userId: string): Promise<void> {
-  await db.insert(creditGrant).values({ userId, creditsMicros: TRIAL_CREDITS * 1_000_000, reason: "trial" });
+  await db
+    .update(user)
+    .set({ credits: sql`${user.credits} + ${TRIAL_CREDITS}` })
+    .where(eq(user.id, userId));
+  await notify(userId, "credits_granted", `Got ${TRIAL_CREDITS} free trial credits`);
 }
 
-// Everything granted minus everything used, in millionths of a credit. Can dip
-// slightly below zero: claims already being checked when credits run out still finish.
+// The balance in millionths of a credit, so budget checks compare whole numbers.
+// Can dip slightly below zero: claims already being checked when credits run out still finish.
 export async function getBalanceMicros(userId: string): Promise<number> {
-  const [granted] = await db
-    .select({ total: sum(creditGrant.creditsMicros) })
-    .from(creditGrant)
-    .where(eq(creditGrant.userId, userId));
-  const [used] = await db
-    .select({ total: sum(usageRecord.creditsMicros) })
-    .from(usageRecord)
-    .where(eq(usageRecord.userId, userId));
-  return Number(granted.total ?? 0) - Number(used.total ?? 0);
+  const [row] = await db.select({ credits: user.credits }).from(user).where(eq(user.id, userId));
+  return Math.round((row?.credits ?? 0) * 1_000_000);
 }
 
-const unseenTrial = (userId: string) =>
-  and(eq(creditGrant.userId, userId), eq(creditGrant.reason, "trial"), isNull(creditGrant.seenAt));
-
-export async function hasUnseenTrial(userId: string): Promise<boolean> {
-  const rows = await db.select({ id: creditGrant.id }).from(creditGrant).where(unseenTrial(userId)).limit(1);
-  return rows.length > 0;
+export async function hasUnseenWelcome(userId: string): Promise<boolean> {
+  const [row] = await db.select({ seenAt: user.welcomeSeenAt }).from(user).where(eq(user.id, userId));
+  return row !== undefined && row.seenAt === null;
 }
 
-export async function markTrialSeen(userId: string): Promise<void> {
-  await db.update(creditGrant).set({ seenAt: new Date() }).where(unseenTrial(userId));
+export async function markWelcomeSeen(userId: string): Promise<void> {
+  await db
+    .update(user)
+    .set({ welcomeSeenAt: new Date() })
+    .where(and(eq(user.id, userId), isNull(user.welcomeSeenAt)));
 }
