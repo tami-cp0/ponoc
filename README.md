@@ -6,7 +6,7 @@ Facts or cap, called live. ponoc listens to you speak, picks out the claims that
 
 | Doc | For |
 |---|---|
-| This README | How the system works, local setup, how usage is priced |
+| This README | How the system works, local setup, deploying, how usage is priced |
 | [`PRODUCT.md`](PRODUCT.md) | Who ponoc is for, what it promises, product rules to keep |
 | [`.env.example`](.env.example) | Every environment variable, with notes |
 
@@ -61,29 +61,26 @@ Without `RESEND_API_KEY`, magic links are printed to the server log instead of e
 | `npm run build` | Builds the Next.js app |
 | `npm start` | Runs the production server |
 | `npm run db:generate` | Creates a migration after you change a schema file in `src/server/db/` |
-| `npm run db:migrate` | Applies pending migrations to `DATABASE_URL`. Never runs automatically: run it yourself or from CI/CD before deploying code that needs it |
+| `npm run db:migrate` | Applies pending migrations to `DATABASE_URL`. Never runs automatically: run it yourself before deploying code that needs it |
 | `npm test` | Unit tests (vitest) |
 | `npm run typecheck` / `npm run lint` | Type and lint checks |
 
-### With Docker
+## Deploying
 
-```bash
-docker compose up --build   # Postgres, migrations, then the app on http://localhost:3000
-```
+The app runs on [Railway](https://railway.com), built from the `Dockerfile`. Every push to `main` deploys.
 
-`compose.yaml` runs a local Postgres and points `DATABASE_URL` at it; everything else comes from `.env`. The image runs with `NODE_ENV=production`, so `.env` must also set `RESEND_API_KEY` and `EMAIL_FROM`.
+| Railway setting | Value |
+|---|---|
+| Builder | Dockerfile |
+| Build / start command | Empty. The Dockerfile handles both |
+| Port | `3000` |
+| Healthcheck path | `/` |
+| Draining time | `30` seconds. Live sessions get up to 20 seconds to finish verifying and save usage |
+| Serverless | Off. The app holds live WebSockets and must stay awake |
 
-To build for a deployment:
-
-```bash
-docker build -t ponoc .                                    # the app
-docker build --target migrate -t ponoc-migrate .
-docker run --rm -e DATABASE_URL=... ponoc-migrate          # before deploying code that needs it
-```
-
-- `SITE_URL` is a build argument because it's baked into static pages. It defaults to `https://ponoc.tech`; `docker compose` takes it from `.env` instead, so local runs keep `http://localhost:3000`. Set the same value at runtime too: the WebSocket origin check reads it.
-- Give the container at least 30 seconds to stop (`stop_grace_period`, or `terminationGracePeriodSeconds` on Kubernetes). Live sessions get up to 20 seconds to finish verifying and save usage.
-- The app is one long-lived process holding WebSockets. It needs a host that runs containers (Fly.io, Railway, Render, a VM), not serverless functions.
+- Set every variable from [`.env.example`](.env.example) on the service. Production also needs `RESEND_API_KEY` and `EMAIL_FROM`.
+- `SITE_URL` is baked into static pages at build time and read at runtime by the WebSocket origin check, so it must be the public URL.
+- Migrations don't run on deploy. Before pushing code that needs one, run `npm run db:migrate` with `DATABASE_URL` set to the production database.
 
 ## How usage is priced
 
