@@ -1,13 +1,18 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
 import { magicLink } from "better-auth/plugins";
 import { and, eq, ne } from "drizzle-orm";
 import { db, schema } from "../db";
+import { Cooldown } from "./cooldown";
 import { sendMagicLinkEmail } from "./email";
 import { env } from "../env";
 import { grantTrial } from "../usage/credits";
 
 const DAY = 60 * 60 * 24;
+
+// One sign-in email per address per minute, whoever asks for it.
+const magicLinkCooldown = new Cooldown(60_000);
 
 function createAuth() {
   return betterAuth({
@@ -32,7 +37,15 @@ function createAuth() {
     plugins: [
       magicLink({
         expiresIn: 5 * 60,
-        sendMagicLink: ({ email, url }) => sendMagicLinkEmail(email, url),
+        sendMagicLink: ({ email, url }) => {
+          const wait = magicLinkCooldown.take(email.trim().toLowerCase());
+          if (wait > 0) {
+            throw new APIError("TOO_MANY_REQUESTS", {
+              message: `We just sent a link to ${email}. You can request another in ${wait}s.`,
+            });
+          }
+          return sendMagicLinkEmail(email, url);
+        },
       }),
     ],
     databaseHooks: {
