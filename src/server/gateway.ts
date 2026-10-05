@@ -24,8 +24,11 @@ export interface GatewayOptions {
     save: (recordId: string, usage: UsageSnapshot) => Promise<void>;
     // The final save, once the session has ended.
     finish: (recordId: string, userId: string, usage: UsageSnapshot, ranOut: boolean) => Promise<void>;
+    // The current balance and what this session has been charged, read together.
+    read: (recordId: string) => Promise<{ balanceMicros: number; chargedMicros: number } | null>;
   };
   flushIntervalMs?: number;
+  balanceRefreshMs?: number;
 }
 
 export interface Gateway {
@@ -37,6 +40,7 @@ const CLOSE_GOING_AWAY = 1001;
 const CLOSE_SERVER_ERROR = 1011;
 const BUDGET_CHECK_MS = 1000;
 const FLUSH_INTERVAL_MS = 60_000;
+const BALANCE_REFRESH_MS = 5000;
 const TERMINATE_AFTER_MS = 2000;
 
 function ignoreSocketError(): void {}
@@ -113,11 +117,26 @@ export function createGateway(options: GatewayOptions): Gateway {
       if (!stillSignedIn) ws.close(CLOSE_UNAUTHORIZED, "signed out");
     }, options.flushIntervalMs ?? FLUSH_INTERVAL_MS);
 
+    // The balance as last read, and how much of this session it already had taken
+    // off. Re-read so credits added or removed mid-session count straight away.
+    let available = balance;
+    let charged = 0;
+    const refresh = setInterval(() => {
+      recordId
+        .then((id) => options.usageStore.read(id))
+        .then((read) => {
+          if (!read) return;
+          available = read.balanceMicros;
+          charged = read.chargedMicros;
+        })
+        .catch((err: Error) => console.error("balance read failed:", err.message));
+    }, options.balanceRefreshMs ?? BALANCE_REFRESH_MS);
+
     // Keeps the client's balance current and stops the session when it hits zero.
     let lastSentBalance = -1;
     let ranOut = false;
     const budget = setInterval(() => {
-      const remaining = balance - session.usage().creditsMicros;
+      const remaining = available - (session.usage().creditsMicros - charged);
       const shown = Math.round(Math.max(0, remaining) / 10_000) / 100;
       if (shown !== lastSentBalance) {
         lastSentBalance = shown;
@@ -145,6 +164,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         if (ended) return;
         ended = true;
         clearInterval(timer);
+        clearInterval(refresh);
         clearInterval(budget);
         if (liveByUser.get(user.id)?.ws === ws) liveByUser.delete(user.id);
         const finish = () =>

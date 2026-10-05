@@ -56,26 +56,36 @@ let finished: { userId: string; ranOut: boolean }[];
 // Balance in micro-credits per user; anyone not listed has plenty.
 let balances: Record<string, number>;
 
+let nextRecord: number;
+
+// Like the database: each session has its own record, and a user's balance has
+// every record's latest saved spending taken off.
+function charged(recordId: string): number {
+  return saved.findLast((s) => s.recordId === recordId)?.usage.creditsMicros ?? 0;
+}
+
+function balanceOf(userId: string): number {
+  const records = new Set(saved.map((s) => s.recordId).filter((id) => id.startsWith(`record-${userId}-`)));
+  return (balances[userId] ?? 1_000_000) - [...records].reduce((sum, id) => sum + charged(id), 0);
+}
+
 async function start() {
   sessions = [];
   saved = [];
   finished = [];
+  nextRecord = 0;
   balances = balances ?? {};
   gateway = createGateway({
     siteUrl: SITE,
     getUser: fakeGetUser,
-    // Like the real balance: granted minus whatever usage has been saved.
-    getBalance: async (userId) => {
-      const spent = saved.findLast((s) => s.recordId === `record-${userId}`)?.usage.creditsMicros ?? 0;
-      return (balances[userId] ?? 1_000_000) - spent;
-    },
+    getBalance: async (userId) => balanceOf(userId),
     createSession: (send) => {
       const session = new FakeSession(send);
       sessions.push(session);
       return session;
     },
     usageStore: {
-      create: async (userId) => `record-${userId}`,
+      create: async (userId) => `record-${userId}-${++nextRecord}`,
       save: async (recordId, usage) => {
         saved.push({ recordId, usage });
       },
@@ -83,7 +93,12 @@ async function start() {
         saved.push({ recordId, usage });
         finished.push({ userId, ranOut });
       },
+      read: async (recordId) => ({
+        balanceMicros: balanceOf(recordId.split("-")[1]),
+        chargedMicros: charged(recordId),
+      }),
     },
+    balanceRefreshMs: 20,
   });
   server = createServer();
   server.on("upgrade", gateway.handleUpgrade);
@@ -202,7 +217,7 @@ describe("gateway", () => {
     expect(sessions[0].closed).toBe(true);
     expect(finished).toEqual([{ userId: "a", ranOut: false }]);
     expect(saved.at(-1)).toEqual({
-      recordId: "record-a",
+      recordId: "record-a-1",
       usage: { ...EMPTY_USAGE, audioSeconds: 150, creditsMicros: 150 },
     });
   });
@@ -236,6 +251,29 @@ describe("gateway", () => {
     await opened(second);
     const closed = closeCode(second);
     second.send(Buffer.alloc(300));
+    expect(await closed).toBe(CLOSE_OUT_OF_CREDITS);
+  });
+
+  it("picks up credits added during a session", async () => {
+    balances = { a: 100 };
+    await start();
+    const ws = connect({ user: "a" });
+    await opened(ws);
+    balances.a = 1000;
+    await new Promise((r) => setTimeout(r, 100));
+    ws.send(Buffer.alloc(300));
+    await new Promise((r) => setTimeout(r, 1300));
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    ws.close();
+  });
+
+  it("stops with 4402 when credits are taken away during a session", async () => {
+    balances = { a: 1000 };
+    await start();
+    const ws = connect({ user: "a" });
+    await opened(ws);
+    const closed = closeCode(ws);
+    balances.a = 0;
     expect(await closed).toBe(CLOSE_OUT_OF_CREDITS);
   });
 

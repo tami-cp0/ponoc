@@ -42,6 +42,23 @@ export async function saveUsage(sessionId: string, usage: UsageSnapshot, ended =
   });
 }
 
+// The user's balance and what this session has been charged so far, in millionths.
+// Read in one query so they always agree, even while a save is landing.
+export async function readLiveBalance(
+  sessionId: string,
+): Promise<{ balanceMicros: number; chargedMicros: number } | null> {
+  const [row] = await db
+    .select({ credits: user.credits, charged: liveSession.creditsUsed })
+    .from(liveSession)
+    .innerJoin(user, eq(user.id, liveSession.userId))
+    .where(eq(liveSession.id, sessionId));
+  if (!row) return null;
+  return {
+    balanceMicros: Math.round(row.credits * 1_000_000),
+    chargedMicros: Math.round(row.charged * 1_000_000),
+  };
+}
+
 export async function finishLiveSession(
   sessionId: string,
   userId: string,
