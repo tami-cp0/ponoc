@@ -3,13 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { BOX, GAP, STEP, buildGrid } from "./grid-pattern";
 
-// The deck's .grid-box blocks, coloured by verdict. Flicker and sheen live in CSS.
 export function ShimmerGrid() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [cols, setCols] = useState(48);
 
-  // Fill the container: measure the block row's width and lay down as many
-  // columns as fit, so the grid spans the full inner width (inside the lip).
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;

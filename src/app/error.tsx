@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { startTransition } from "react";
 import { Button } from "@/components/Button";
 
-// Shown when a page fails to load, e.g. the database can't be reached.
 export default function ErrorPage({ reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
 

@@ -4,7 +4,6 @@ import { useEffect } from "react";
 
 const SHOW_MS = 5000;
 
-// A short, flat notice for when listening stops on its own. Tap to dismiss.
 export function LiveNotice({ message, onDismiss }: { message: string | null; onDismiss: () => void }) {
   useEffect(() => {
     if (!message) return;

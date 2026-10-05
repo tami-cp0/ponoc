@@ -13,7 +13,6 @@ const SWIPE_THRESHOLD = 90;
 const VISIBLE_STACK = 4;
 
 const exitVariants = {
-  // The top card, removed on purpose, is thrown off to the left.
   gone: {
     x: -460,
     y: 12,
@@ -25,7 +24,6 @@ const exitVariants = {
       opacity: { duration: 0.32, ease: "easeIn" as const },
     },
   },
-  // Cards pushed out of the back of the visible stack just fade.
   vanish: {
     opacity: 0,
     transition: { duration: 0.2 },
@@ -42,9 +40,6 @@ interface Props {
   getAnalyser: () => AnalyserNode | null;
 }
 
-// Three piles: the deck (unread claims, top card first), the session stack
-// (cards swiped away, retrievable), and the verdict grid (every verdict from
-// every session, kept through resets).
 export function ClaimDeck({ cards, running, connecting, verdictHistory, onToggle, getAnalyser }: Props) {
   const [deck, setDeck] = useState<Card[]>([]);
   const [session, setSession] = useState<Card[]>([]);
@@ -55,10 +50,8 @@ export function ClaimDeck({ cards, running, connecting, verdictHistory, onToggle
   const [seenIds, setSeenIds] = useState(new Set<string>());
   const [syncedCards, setSyncedCards] = useState<Card[]>([]);
 
-  // When the claim stream changes: new claims join the back of the deck, status
-  // changes update a card in place wherever it is, and every new verdict gets a
-  // box. Done during render (React's pattern for adjusting state to a changed
-  // prop) rather than in an effect, which would render twice.
+  // New claims join the back of the deck, status changes update a card in place,
+  // and every new verdict gets a box.
   if (cards !== syncedCards) {
     setSyncedCards(cards);
     const byId = new Map(cards.map((c) => [c.id, c]));
@@ -162,8 +155,6 @@ export function ClaimDeck({ cards, running, connecting, verdictHistory, onToggle
               .slice(0, VISIBLE_STACK)
               .map((card, i) => {
                 const isTop = i === 0;
-                // Cards behind fade their contact shadow with depth, so a tall
-                // stack doesn't pile up into one dark blob at the fanned edge.
                 const depthShadow = isTop
                   ? undefined
                   : `0 ${i * 4}px ${8 + i * 3}px -6px rgba(20, 20, 20, ${(0.18 - i * 0.04).toFixed(2)})`;
@@ -176,9 +167,7 @@ export function ClaimDeck({ cards, running, connecting, verdictHistory, onToggle
                       zIndex: VISIBLE_STACK - i,
                       transformOrigin: "center",
                       boxShadow: depthShadow,
-                      // A demoted card must reset filter explicitly, or its drop-shadow
-                      // lingers and piles onto the stack. `filter` also flattens 3D,
-                      // which is why the tilt and spin live on the inner wrapper.
+                      // A demoted card must reset filter explicitly, or its drop-shadow lingers.
                       filter: isTop ? shadow : "none",
                       ...(isTop ? { x: dragX, y: dragY } : null),
                     }}

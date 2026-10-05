@@ -40,9 +40,6 @@ export function ClaimCard({ card, flipped, onToggleFlip, onVerdictReady }: Props
   const [phase, setPhase] = useState<Phase>(settled ? "verdict" : "blinking");
   const articleRef = useRef<HTMLElement>(null);
   const cells = useCells(articleRef);
-  // The loading animation plays once, and only for a card that arrived unsettled.
-  // A card mounted already settled (e.g. retrieved from the session stack) shows
-  // its verdict straight away.
   const mountedUnsettled = useRef(!settled);
 
   useEffect(() => {
@@ -62,8 +59,6 @@ export function ClaimCard({ card, flipped, onToggleFlip, onVerdictReady }: Props
     if (phase === "verdict" && settled) onVerdictReady?.();
   }, [phase, settled, onVerdictReady]);
 
-  // The surface stays neutral while the cells animate, and turns to the verdict
-  // gradient last, as the grid resolves.
   const surface =
     v && phase === "verdict" ? `radial-gradient(120% 90% at 20% 0%, ${v.base} 0%, ${v.deep} 78%)` : "var(--bg)";
 
@@ -71,7 +66,6 @@ export function ClaimCard({ card, flipped, onToggleFlip, onVerdictReady }: Props
   const findingSources = [...new Set([...(card.sources ?? []), ...extracted.urls])];
   const hasFinding = Boolean(card.reasoning);
   const showVerdict = phase === "verdict" && settled;
-  // In spin mode the finding lives on the real back face; the front never swaps.
   const frontFinding = !controlled && showFinding && hasFinding;
   const showBackFace = controlled && showVerdict && hasFinding;
 

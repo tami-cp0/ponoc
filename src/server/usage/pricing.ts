@@ -1,6 +1,4 @@
-// Business rules live in code (CREDIT_USD in src/shared/credits.ts, MARKUP
-// here), so changes to them are deliberate and in git history. Provider prices
-// change with the provider, so they come from env. See the README.
+// Provider prices come from env. See the README.
 
 import { CREDIT_USD } from "@/shared/credits";
 

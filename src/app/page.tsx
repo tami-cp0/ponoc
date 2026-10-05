@@ -44,7 +44,6 @@ const FEATURES = [
 export default function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
 
-  // One IntersectionObserver reveals every .reveal element on first scroll into view.
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;

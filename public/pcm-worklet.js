@@ -4,7 +4,7 @@ class PCMWorklet extends AudioWorkletProcessor {
     this.targetRate = options.processorOptions.targetRate;
     this.ratio = sampleRate / this.targetRate;
     this.carry = 0;
-    // Sends 100 ms of audio per message instead of one per render callback (~3 ms).
+    // Sends 100 ms of audio per message.
     this.batch = new Int16Array(this.targetRate / 10);
     this.filled = 0;
   }

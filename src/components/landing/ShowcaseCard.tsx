@@ -4,8 +4,6 @@ import { motion, useMotionValue, useTransform } from "motion/react";
 import type { Card } from "@/shared/protocol";
 import { ClaimCard } from "../card/ClaimCard";
 
-// The real deck card with the deck's drag: elastic snap-back and a tilt on an
-// inner preserve-3d wrapper.
 export function ShowcaseCard({ card }: { card: Card }) {
   const dragX = useMotionValue(0);
   const dragY = useMotionValue(0);

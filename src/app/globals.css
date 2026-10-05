@@ -24,7 +24,6 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
-/* Slab world: fine grain over the tinted verdict surface */
 .slab-grain {
   position: absolute;
   inset: 0;
@@ -35,7 +34,6 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* Ticket world: perforated tear line with side punch-notches */
 .ticket-perf {
   position: relative;
   height: 0;
@@ -56,7 +54,6 @@ body {
 .ticket-perf::before { left: -1.25rem; transform: translate(-50%, -50%); }
 .ticket-perf::after { right: -1.25rem; transform: translate(50%, -50%); }
 
-/* Stamp world: soft paper grain + struck-on verdict */
 .paper-grain {
   position: absolute;
   inset: 0;
@@ -71,7 +68,6 @@ body {
   transform: rotate(-4deg);
 }
 
-/* Monolith back control: top + bottom rules that fade out at both edges */
 .verdict-back {
   position: relative;
 }
@@ -87,7 +83,6 @@ body {
 .verdict-back::before { top: 0; }
 .verdict-back::after { bottom: 0; }
 
-/* Monolith face swap: directional masked reveal, not a fade */
 .face {
   animation: face-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -107,13 +102,11 @@ body {
   .face { animation: none; }
 }
 
-/* Pending world: blinking grid loader */
 @keyframes grid-blink {
   0%, 100% { opacity: 0.14; }
   50% { opacity: 0.55; }
 }
 
-/* Per-cell bleed: the cell's own gray shade -> verdict color, no dark midpoint */
 @keyframes cell-bleed {
   from { background-color: var(--shade); }
   to { background-color: var(--verdict); }
@@ -123,7 +116,6 @@ body {
   .grid-cell { animation: none !important; }
 }
 
-/* Deck stage: header + borderless sessions sidebar + card deck */
 .deck-page {
   display: flex;
   flex-direction: column;
@@ -145,7 +137,6 @@ body {
   color: var(--fg);
 }
 
-/* Body: three stacked layers */
 .stage {
   position: relative;
   flex: 1;
@@ -153,7 +144,6 @@ body {
   overflow: hidden;
 }
 
-/* Layer 2: the deck, centered in the body */
 .stage-deck {
   position: absolute;
   inset: 0;
@@ -176,18 +166,9 @@ body {
   flex-shrink: 0;
   overflow: visible;
   border-radius: 34px;
-  /* Same material as the page — the trail's floor is the page colour, so the
-     centre where the deck sits shows no platform, only the carved channel. */
   background: var(--bg);
 }
 
-/* The valley is the channel BETWEEN two concentric rings, exactly like the
-   snowball track. Each ring carries a paired outset + inset, dark + white
-   shadow: the outset lifts its outer side up to the surface, the inset curves
-   its inner side down into the channel — so each edge reads as a rounded lip
-   that bends, not a flat line. Top-lit, per the reference. */
-
-/* Outer ring — the trail's outer wall, bending down from the page surface. */
 .deck-viewport::before {
   content: "";
   position: absolute;
@@ -203,11 +184,9 @@ body {
 
 .deck-card {
   position: absolute;
-  /* Sits in the hole inside the valley — the "ball" in the track. */
   inset: 30px;
   cursor: grab;
   border-radius: 4px;
-  /* Cards are dragged, not read like a document: no text selection mid-drag. */
   user-select: none;
   -webkit-user-select: none;
 }
@@ -251,7 +230,6 @@ body {
   cursor: default;
 }
 
-/* Layer 1: all-time sessions grid, anchored to body bottom, behind all */
 .stage-grid {
   position: absolute;
   left: 0;
@@ -275,22 +253,16 @@ body {
   flex-shrink: 0;
   border-radius: 1px;
   background-color: var(--box);
-  /* Flicker: the box's own color jitters dim↔bright. Colour only, never
-     opacity (which would reveal the pale background). Irregular steps + a
-     per-box phase (inline delay/duration) keep it random. */
   animation: box-flicker 6s ease-in-out infinite;
 }
 
 @keyframes box-flicker {
   0%   { filter: brightness(1); }
-  /* long calm stretch — the box mostly rests */
   40%  { filter: brightness(1); }
-  /* one short burst of flicker */
   48%  { filter: brightness(1.6); }
   53%  { filter: brightness(0.85); }
   58%  { filter: brightness(1.5); }
   64%  { filter: brightness(1); }
-  /* calm again to the end */
   100% { filter: brightness(1); }
 }
 
@@ -298,9 +270,6 @@ body {
   .grid-box { animation: none; }
 }
 
-/* ── 3D deck (/main) ─────────────────────────────────────────────────────────
-   Scoped to .deck-page-3d. Sizes the viewport (and the card inset within it) and
-   scales the carved valley ring radii to match the frame. */
 .deck-page-3d .deck-viewport {
   width: min(420px, 94vw);
   height: min(530px, 82vh);
@@ -310,13 +279,12 @@ body {
 .deck-page-3d .deck-card {
   inset: 0;
   width: min(300px, 80vw);
-  height: min(420px, 112vw); /* 80vw × 1.4 — keeps the 5:7 card ratio */
+  height: min(420px, 112vw); /* 5:7 card ratio */
   margin: auto;
 }
 
 .deck-page-3d .deck-viewport::before {
   border-radius: 36px;
-  /* Phase 1: valley widened a little for the 3D deck — same depth. */
   box-shadow:
     0 -9px 8px hsla(0, 0%, 0%, 0.15),
     inset 0 11px 16px hsla(0, 0%, 0%, 0.15),
@@ -328,11 +296,8 @@ body {
   height: 64px;
 }
 
-/* Controls row: buttons sit on a fixed bottom baseline; the visualizer rises
-   above them from the fabric. Height leaves room for the risen visualizer. */
 .deck-page-3d .stage-controls {
   position: absolute;
-  /* Deck stays vertically centred; controls sit a fixed gap above its top edge. */
   top: calc(50% - (min(530px, 82vh) / 2) - 82px - 28px);
   left: 50%;
   transform: translateX(-50%);
@@ -347,17 +312,11 @@ body {
   pointer-events: auto;
 }
 
-/* The visualizer: the same raised-from-fabric bulge as the keys, but taller. It
-   rises in the centre gap once the buttons have parted. Overflow visible so the
-   bulge slopes into the page (no border). */
 .deck-page-3d .ctrl-viz {
   position: relative;
   flex-shrink: 0;
   overflow: visible;
   border-radius: 999px;
-  /* Transparent like the buttons — an opaque fill would sit ON TOP of the
-     ::before bulge (z-index:-1) and hide it, making it read flat. The page shows
-     through, and the bulge renders over it. */
   background: transparent;
   display: flex;
   align-items: center;
@@ -377,7 +336,6 @@ body {
     inset 0 -5px 8px hsla(0, 0%, 0%, 0.18);
 }
 
-/* Static frequency bars (placeholder until wired to real audio). */
 .deck-page-3d .viz-bars {
   display: flex;
   align-items: center;
@@ -387,9 +345,6 @@ body {
   width: 100%;
   padding: 0 1rem;
 }
-/* Each bar is a groove carved into the visualizer face — recessed, not raised.
-   Same material (transparent), depth from an inset shadow: dark upper wall, a
-   faint light lower lip, top-lit like the deck valley. */
 .deck-page-3d .viz-bar {
   width: 6px;
   flex-shrink: 0;
@@ -400,43 +355,23 @@ body {
     inset 0 -1.5px 2px rgba(255, 255, 255, 0.85);
 }
 
-/* Mobile ONLY (< 640px): scale down the groove, cards, settings button, and the
-   controls→groove gap. Placed at the END so it overrides the desktop
-   .deck-page-3d rules above (equal specificity → later source wins). These need
-   min()/calc() (or match .deck-page-3d specificity), so they live in CSS rather
-   than Tailwind. Nothing else changes. */
+/* Mobile. Kept after the .deck-page-3d rules so it overrides them. */
 @media (max-width: 640px) {
-  /* Everything derives from ONE clamped height H so the card is always shorter
-     than the groove and the groove never turns fat/squat. On a tall narrow phone
-     H is driven by width (100vw); on a wide-short screen (e.g. 540×720) the 55vh
-     cap takes over — and because the card height is a fraction of the SAME H, it
-     shrinks with the groove instead of overflowing it. Widths are derived from H
-     via the 5:7 card ratio, so no independent vw can make the box fat. */
   .deck-page-3d .deck-viewport {
     height: min(100vw, 55vh);
-    width: calc(min(100vw, 55vh) / 1.18); /* wider, so more valley floor at the sides */
+    width: calc(min(100vw, 55vh) / 1.18);
   }
 
   .deck-page-3d .deck-card {
-    height: calc(min(100vw, 55vh) * 0.8);       /* smaller in the groove — more floor shows */
+    height: calc(min(100vw, 55vh) * 0.8);
     width: calc(min(100vw, 55vh) * 0.8 / 1.4);  /* 5:7 card ratio */
   }
 
-  
-  
-
-  
-
-  /* Deck stays vertically centred; controls hug it. The 82px row centres the
-     short (~40px) buttons, so ~21px of empty row hangs below them — anchor off the
-     buttons' bottom (~61px into the row), not the full 82px, plus a small 6px gap,
-     so the VISIBLE buttons sit close to the groove. */
-  .deck-page-3d .stage-controls {
+.deck-page-3d .stage-controls {
     top: calc(50% - (min(100vw, 55vh) / 2) - 61px - 40px);
   }
 }
 
-/* 404 — quiet, centred, in the app's paper palette. */
 .notfound {
   flex: 1;
   display: flex;
@@ -463,8 +398,6 @@ body {
   color: var(--muted);
 }
 
-/* Login — the 404 layout, the deck's convex keys, and a settings-style recessed
-   row as the email field. */
 .login {
   position: relative;
   isolation: isolate;
@@ -486,8 +419,7 @@ body {
   font-size: 0.78rem;
   color: var(--muted);
 }
-/* Shallower than the settings rows: an input reads better as a light press.
-   Doubled class so it beats .settings-row, which comes later in this file. */
+/* Doubled class so it beats .settings-row, which comes later in this file. */
 .settings-row.login-field {
   display: block;
   padding: 0;
@@ -521,12 +453,6 @@ body {
   color: var(--muted);
 }
 
-/* ============================================================================
-   Button — ponoc's one raised button (src/components/Button.tsx). The settings gear's
-   recipe: a page-colour key whose ::before carries the convex bulge; pressing
-   flattens the bulge and sinks the key 2px. Only size and rounding vary per use.
-   ============================================================================ */
-
 .deck-page-3d {
   --gear-size: 46px;
   --control-height: 44px;
@@ -534,8 +460,6 @@ body {
 
 .btn {
   position: relative;
-  /* Own stacking context, so the bulge (z-index -1) always sits just behind the
-     label, never behind a panel's background. */
   isolation: isolate;
   display: inline-flex;
   align-items: center;
@@ -584,8 +508,6 @@ body {
   outline: none;
 }
 
-/* Joined keys (start / reset) straighten one side. Rounding off happens at once;
-   straightening waits 0.14s so the keys have closed the gap first. */
 .btn[data-square="left"] {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
@@ -597,8 +519,6 @@ body {
   transition-delay: 0s, 0.14s;
 }
 
-/* Icons are engraved into the key face. Icon-only keys use the pale stroke that
-   lets the engraving carry the shape. Brand marks (Google) stay untouched. */
 .btn svg:not([data-brand]) {
   flex-shrink: 0;
   transition: transform 0.2s ease;
@@ -635,16 +555,8 @@ body {
   }
 }
 
-/* ============================================================================
-   Settings — a centered neumorphic panel in the same material as the deck.
-   Native <dialog>: top-layer (escapes the deck's 3D transforms), focus trap,
-   Esc-to-close for free. The panel is a raised slab; interactive keys carry the
-   convex bulge; the usage meter is carved in; dormant rows drop to a flat
-   recess so they read as present-but-asleep rather than greyed out.
-   ============================================================================ */
-
 .settings-dialog {
-  margin: auto; /* centered by <dialog>'s default box; kept explicit */
+  margin: auto;
   padding: 0;
   border: none;
   background: transparent;
@@ -654,20 +566,15 @@ body {
   color: var(--fg);
 }
 
-/* The dialog takes focus when it opens (see components/Dialog.tsx); the panel
-   itself shouldn't show a focus outline for that. */
 .settings-dialog:focus {
   outline: none;
 }
 
-/* Soft scrim — a wash, not a hard black, so the lit surface stays warm. */
 .settings-dialog::backdrop {
   background: hsla(0, 0%, 20%, 0.28);
   backdrop-filter: blur(2px);
 }
 
-/* Open animation: one authored moment. The panel rises from slightly down and
-   soft, resolving into the top layer. Backdrop fades with it. */
 @keyframes settings-rise {
   from {
     opacity: 0;
@@ -699,11 +606,6 @@ body {
   }
 }
 
-/* The panel slab: page-coloured, lifted off the scrim by a clean directional
-   drop shadow. The convex top-light lives ONLY as an inset lip (inside the
-   panel), never as an outer white shadow — an outer white glow over the dark
-   scrim reads as a neon rim-light, since it has no matching surface to blend
-   into the way the deck keys do on the page. */
 .settings-panel {
   position: relative;
   width: min(92vw, 400px);
@@ -735,9 +637,6 @@ body {
   gap: 1.3rem;
 }
 
-/* Every row is carved into the panel with the deck's exact valley recipe
-   (.deck-page-3d .deck-viewport::before): each edge an outset + inset pair, so
-   it reads as a rounded lip bending down into the channel. */
 .settings-row {
   position: relative;
   border-radius: 16px;
@@ -767,7 +666,6 @@ body {
   gap: 0.5rem;
 }
 
-/* Account: carved monogram disc + guest text. */
 .settings-account {
   display: flex;
   align-items: center;
@@ -790,8 +688,6 @@ body {
     inset 0 -3px 5px hsla(0, 0%, 100%, 0.7);
 }
 
-/* Shared big-number style — the credits figure. Tabular numerals so it doesn't
-   jitter, Array face to match the wordmark. */
 .settings-meter-num {
   font-family: var(--font-array), sans-serif;
   font-size: 2rem;
@@ -805,9 +701,6 @@ body {
   color: var(--muted);
 }
 
-/* Verdict tally: two carved counters side by side, tinted with the deck's
-   true/false colours. The number carries the colour; the label stays muted so
-   the count reads first. */
 .settings-tally {
   display: flex;
   gap: 0.75rem;
@@ -845,7 +738,6 @@ body {
   color: var(--false);
 }
 
-/* Balance / pay-as-you-go — dormant. */
 .settings-balance {
   display: flex;
   align-items: center;
@@ -874,8 +766,6 @@ body {
   min-width: 0;
 }
 
-/* Toggle: a carved track with a raised knob resting at the off end. Purely a
-   visual affordance while dormant — no checked state yet. */
 .settings-switch {
   position: relative;
   flex-shrink: 0;
@@ -901,9 +791,6 @@ body {
     0 2px 3px hsla(0, 0%, 0%, 0.22);
 }
 
-/* Dormant "coming soon" treatment — the recessed row loses contrast and the
-   convex keys inside it flatten to the surface, so they read as asleep, not
-   disabled-grey. No pointer, no press travel. */
 .settings-soon {
   opacity: 0.62;
   cursor: default;
@@ -940,13 +827,6 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* ============================================================================
-   Credits — the welcome gift, the low-balance note, the out-of-credits stop and
-   checkout. Same material as the settings panel: carved rows, convex keys.
-   One addition: the ink key, reserved for the single next step in a dialog, so
-   it reads as "this way" without bringing colour into a paper world.
-   ============================================================================ */
-
 .deck-header {
   position: relative;
 }
@@ -975,7 +855,6 @@ body {
   outline: none;
 }
 
-/* Welcome gift: a coin pressed into the panel, its face raised out of the recess. */
 .gift {
   padding: 2rem 1.75rem 1.25rem;
   text-align: center;
@@ -1051,7 +930,6 @@ body {
   text-wrap: pretty;
 }
 
-/* Out of credits */
 .spent {
   padding: 1.75rem 1.5rem 1.1rem;
 }
@@ -1071,8 +949,6 @@ body {
   margin-top: 1rem;
 }
 
-/* Checkout: unchosen packs sit carved into the panel; the chosen one rises into
-   a key, the same raised shape everything pressable has in ponoc. */
 .checkout {
   width: min(92vw, 420px);
 }
@@ -1159,8 +1035,6 @@ body {
 .checkout-custom-help[data-invalid="true"] {
   color: var(--false);
 }
-/* The custom amount sits where the other rows show their price, in the same
-   face, with a dashed rule marking it as editable. */
 .checkout-custom-field {
   display: flex;
   align-items: baseline;
@@ -1215,7 +1089,6 @@ body {
   box-shadow: 0 3px 8px -3px hsla(0, 0%, 0%, 0.4);
 }
 
-/* Why listening stopped on its own: flat ink, no icon, no shadow. */
 .live-notice {
   position: fixed;
   top: 76px;
@@ -1245,7 +1118,6 @@ body {
   }
 }
 
-/* Low balance: a small carved pill centred in the deck header. */
 .credit-low {
   position: absolute;
   top: 50%;
@@ -1279,20 +1151,6 @@ body {
   color: var(--muted);
 }
 
-/* ============================================================================
-   Landing page (/) — Hirael's editorial composition (full-bleed rounded hero,
-   top-centre nav pill, bottom-pinned giant wordmark, tiny body, huge negative
-   space, serif-italic accent words, watermark footer) rendered in ponoc's PAPER
-   palette so it stays one world with /app. Neumorphic material stays subtle —
-   only the CTA keys and the showcase card's valley carry it.
-
-   Local tokens mirror Hirael's cs-* scale, remapped to paper:
-     --lp-ink    : primary text        (near-black)
-     --lp-soft   : secondary text      (muted)
-     --lp-faint  : tertiary / captions (fainter)
-     --lp-panel  : raised surface tiles (white card)
-     --lp-sunk   : inset well tiles     (slightly darker than paper)
-   ============================================================================ */
 .landing {
   --lp-ink: #171717;
   --lp-soft: #565656;
@@ -1303,12 +1161,7 @@ body {
   width: 100%;
   background: var(--bg);
   color: var(--lp-ink);
-  /* Guard: the giant vw-sized wordmark, watermark, and full-bleed grid must never
-     produce a horizontal scrollbar on narrow screens. clip keeps sticky/anchored
-     children working (unlike hidden). */
   overflow-x: clip;
-  /* Own stacking context, so the column lines (z-index -1) sit above this
-     background but under every section. Same for .login below. */
   position: relative;
   isolation: isolate;
 }
@@ -1325,9 +1178,6 @@ body {
   -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 70%);
   mask-image: radial-gradient(ellipse at 50% 50%, #000 30%, transparent 70%);
 }
-/* Each column is a soft band: bright at its left edge, shading darker toward its
-   right, then snapping bright again at the next column. The repeats give the
-   fluted, ribbed look. */
 .column-lines::before {
   content: "";
   width: calc(var(--column-width) * var(--column-count));
@@ -1346,9 +1196,6 @@ body {
   font-style: italic;
   font-weight: 400;
 }
-/* Accent words in the tall PONOC face (Bebas) rather than the serif. Bebas runs
-   a little narrower/taller than the array-wide headings, so nudge the size up to
-   optically match the surrounding text. */
 .lp-accent {
   font-family: var(--font-bebas), sans-serif;
   font-weight: 400;
@@ -1356,9 +1203,6 @@ body {
   letter-spacing: 0;
 }
 
-/* ── HERO ─────────────────────────────────────────────────────────────────
-   Full-viewport panel: a rounded paper panel inset from the window edge by a
-   small pad, content pinned to its BOTTOM. */
 .lp-hero-wrap {
   position: relative;
   height: 100dvh;
@@ -1379,9 +1223,6 @@ body {
   background: var(--bg);
 }
 
-/* Two soft colour glows that drift slowly. Each is its own layer moved only by
-   transform, so the animation stays on the GPU instead of repainting the hero.
-   At rest they sit exactly where the old static gradients were. */
 .lp-hero-glow {
   position: absolute;
   inset: 0;
@@ -1410,8 +1251,6 @@ body {
   animation-name: lp-glow-b;
   animation-duration: 34s;
 }
-/* On top of the glows: a soft vignette so the bottom content sits on a slightly
-   deeper floor, and a thin dissolve into the page colour at the bottom edge. */
 .lp-hero-glow::after {
   content: "";
   position: absolute;
@@ -1436,7 +1275,6 @@ body {
   }
 }
 
-/* Nav — centred pill at the very top, tiny links, rounded bottom corners. */
 .lp-nav {
   position: absolute;
   top: 0;
@@ -1473,7 +1311,6 @@ body {
 }
 .lp-nav a:hover { color: var(--lp-ink); }
 
-/* Bottom-pinned content: 12-col grid, huge wordmark left, small copy + CTA right. */
 .lp-hero-content {
   position: relative;
   z-index: 10;
@@ -1482,8 +1319,6 @@ body {
 }
 @media (min-width: 768px) { .lp-hero-content { padding: 2rem; } }
 @media (min-width: 1024px) { .lp-hero-content { padding: 2.5rem; } }
-/* Hirael's hero layout: giant wordmark bottom-left, lede + CTA bottom-right,
-   sharing one baseline. 12-col grid, aligned to the bottom edge. */
 .lp-hero-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -1495,8 +1330,6 @@ body {
   grid-column: span 12;
 }
 @media (min-width: 1024px) { .lp-hero-head { grid-column: span 8; } }
-/* Single word PONOC. — a giant Bebas wordmark, tall and straight, filling the
-   left column like Hirael's "Hirael" mark. */
 .lp-hero-title {
   font-family: var(--font-bebas), sans-serif;
   font-weight: 400;
@@ -1525,7 +1358,6 @@ body {
 }
 @media (min-width: 640px) { .lp-hero-lede { font-size: 1.1rem; } }
 
-/* Tiny uppercase mono label — used across sections. */
 .lp-label {
   font-family: var(--font-geist-mono), monospace;
   font-size: 0.625rem;
@@ -1536,7 +1368,6 @@ body {
 }
 @media (min-width: 640px) { .lp-label { font-size: 0.7rem; } }
 
-/* ── Shared section shell ──────────────────────────────────────────────── */
 .lp-section {
   padding: 4.5rem 1rem;
 }
@@ -1548,12 +1379,6 @@ body {
   margin: 0 auto;
 }
 
-/* ── MANIFESTO ─────────────────────────────────────────────────────────────
-   Centred raised panel, eyebrow, big statement with serif-italic accent words,
-   one tiny line beneath. */
-/* The idea card carries the SAME convex bulge as the CTA keys (page-colour
-   surface, ::before bulge), scaled up — but it is not a button, so no press /
-   hover state. */
 .lp-manifesto {
   display: flex;
   flex-direction: column;
@@ -1575,7 +1400,6 @@ body {
 @media (min-width: 1024px) { .lp-manifesto-statement { font-size: 3.4rem; } }
 .lp-manifesto-statement .landing-serif { font-size: 1.02em; }
 
-/* ── PRODUCT ─────────────────────────────────────────────────────────────── */
 .lp-product-title {
   font-family: var(--font-array-wide), sans-serif;
   font-weight: 600;
@@ -1586,9 +1410,6 @@ body {
 @media (min-width: 640px) { .lp-product-title { font-size: 2rem; } }
 @media (min-width: 1024px) { .lp-product-title { font-size: 2.5rem; } }
 
-/* The verdict card is the hero of this section — it is the real product artifact,
-   so it leads on the left in its deck valley. The three steps read as ONE flowing
-   process beside it (hear → check → rule), not four equal boxes. */
 .lp-product-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -1597,7 +1418,6 @@ body {
 }
 @media (min-width: 900px) {
   .lp-product-grid {
-    /* FALSE card · step flow · TRUE card — a card each side, flow centred. */
     grid-template-columns: auto 1fr auto;
     gap: 3.5rem;
     justify-content: center;
@@ -1605,13 +1425,9 @@ body {
   }
 }
 
-/* Cell 1: the showcase — the EXACT deck valley from /main. Container is the page
-   colour; the carved channel lives on the ::before ring (inset 6px, radius 28px)
-   with the deck's paired outset+inset dark+white shadow, top-lit. The card sits
-   in the hole inside the valley, like the deck-card in its track. */
 .lp-showcase {
   position: relative;
-  z-index: 2; /* the dragged card floats above the step flow beside it */
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1619,7 +1435,7 @@ body {
   padding: 2rem;
   border-radius: 34px;
   background: var(--bg);
-  perspective: 1200px; /* matches the deck-viewport on /main */
+  perspective: 1200px;
 }
 .lp-showcase::before {
   content: "";
@@ -1643,11 +1459,6 @@ body {
   color: var(--lp-soft);
 }
 
-/* The showcase card is the REAL deck card (ClaimCardMonolith in a .deck-card
-   from ClaimDeckStage). Size it to the recess here — a fixed card box, statically
-   centred (the deck sizes it against the viewport; in this smaller recess we pin
-   an explicit size instead). Everything else — surface, grain, verdict, drag,
-   tilt — comes verbatim from the app, so the white-gap bug can't exist. */
 .lp-showcase .deck-card {
   position: relative;
   inset: auto;
@@ -1659,15 +1470,9 @@ body {
   touch-action: none;
 }
 .lp-showcase .deck-card:active { cursor: grabbing; }
-/* Normalise the claim height on the showcase cards so a shorter or longer claim
-   doesn't shift the verdict stamp and footer. Reserve a fixed block for the claim
-   text (the <p> right after the "claim" label on the verdict face). Landing-only:
-   the live deck on /app is untouched. */
 .lp-showcase .face > p {
   min-height: 5.4em;
 }
-/* Narrow phones: the cards are a touch bigger, and the recess padding shrinks so
-   the whole thing still fits comfortably. */
 @media (max-width: 640px) {
   .lp-showcase { padding: 1.5rem; }
   .lp-showcase .deck-card { width: 15.5rem; height: 21.7rem; }
@@ -1677,12 +1482,9 @@ body {
   .lp-showcase .deck-card { width: 14rem; height: 19.6rem; }
 }
 
-/* The three steps as ONE connected process — not boxed cards. A vertical flow
-   with a continuous rail down the left; each step is a node on the rail, so it
-   reads hear → check → rule, the pipeline that produces the card on the left. */
 .lp-flow {
   position: relative;
-  z-index: 1; /* sits below the showcase so a dragged card overlaps it, not under */
+  z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1692,7 +1494,6 @@ body {
   padding: 0 0 2.25rem 2.25rem;
 }
 .lp-step:last-child { padding-bottom: 0; }
-/* The rail: a carved groove running down through the node dots. */
 .lp-step::before {
   content: "";
   position: absolute;
@@ -1704,7 +1505,6 @@ body {
   background: var(--line);
 }
 .lp-step:last-child::before { display: none; }
-/* The node: a small carved well seated on the rail, top-lit like the deck grooves. */
 .lp-step-node {
   position: absolute;
   left: 0;
@@ -1733,8 +1533,6 @@ body {
   color: var(--lp-soft);
   max-width: 38ch;
 }
-/* ── HISTORY (shimmer grid) — ponoc's own addition, held to Hirael restraint.
-   Verdict-coloured .grid-box blocks in a shallow well with a sheen sweep. */
 .lp-history-head {
   display: flex;
   flex-direction: column;
@@ -1743,15 +1541,9 @@ body {
   margin-bottom: 2.5rem;
   text-align: center;
 }
-/* The shimmer band lives in the EXACT deck valley too — same container/::before
-   ring recipe as /app. The ring sits above the blocks (z-index 3) so its carved
-   lip curves over the grid edges, exactly like the deck-card sitting in the
-   channel. Blocks are clipped to the inner radius. */
 .lp-grid-frame {
   position: relative;
   border-radius: 34px;
-  /* Enough padding to clear the carved lip (::before at inset 6px), but tight
-     enough that the blocks fill the container edge to edge. */
   padding: 1.5rem 1.25rem;
   background: var(--bg);
 }
@@ -1776,9 +1568,6 @@ body {
   align-items: stretch;
 }
 .lp-grid-row { display: flex; justify-content: center; }
-/* Gentler flicker on the landing than the deck's: the deck's brightness(1.6)
-   pushes a near-bg grey past white. Cap it so no cell ever brightens above the
-   page surface into a second white. */
 .lp-grid-rows .grid-box { animation-name: lp-box-flicker; }
 @keyframes lp-box-flicker {
   0%, 40%, 100% { filter: brightness(1); }
@@ -1815,17 +1604,12 @@ body {
   .lp-grid-sheen { animation: none; opacity: 0; }
 }
 
-/* ── FOOTER ────────────────────────────────────────────────────────────────
-   CTA row (serif-italic accent + pill), 4-col link nav, giant faint watermark,
-   copyright + legal. Flat on paper. */
 .lp-footer {
   position: relative;
   overflow: hidden;
   padding: 5rem 1.5rem 2rem;
 }
 @media (min-width: 640px) { .lp-footer { padding: 7rem 2.5rem 2rem; } }
-/* The footer spans nearly the full width — only a small side margin, not the
-   72rem reading cap the content sections use. */
 .lp-footer .lp-container {
   max-width: none;
 }
@@ -1898,7 +1682,6 @@ body {
 }
 .lp-copy:hover { color: var(--lp-ink); }
 
-/* "copied": appears beside the clicked address in the footer's label style. */
 .lp-copied {
   margin-left: 0.6rem;
   font-family: var(--font-geist-mono), monospace;
@@ -1913,7 +1696,6 @@ body {
   opacity: 1;
 }
 
-/* Giant watermark — ponoc in faint ink, the closing note. */
 .lp-watermark {
   border-top: 1px solid var(--line);
   padding-top: 2rem;
@@ -1928,7 +1710,6 @@ body {
   letter-spacing: -0.05em;
   color: color-mix(in srgb, var(--lp-ink) 8%, transparent);
 }
-/* Copyright and legal links share one row at every width. */
 .lp-footer-bottom {
   display: flex;
   flex-direction: row;
@@ -1946,7 +1727,6 @@ body {
 }
 .lp-footer-legal a:hover { color: var(--lp-ink); }
 
-/* ── Scroll reveal — cheap CSS fade-up toggled by IntersectionObserver. ──── */
 .reveal {
   opacity: 0;
   transform: translateY(20px);
@@ -1962,10 +1742,6 @@ body {
   border-radius: 999px;
 }
 
-/* ============================================================================
-   Legal (/legal) — Read mode. A single narrow measure on the paper surface,
-   generous leading, quiet hierarchy. Reuses the landing's ink/soft/faint tokens.
-   ============================================================================ */
 .legal {
   flex: 1;
   width: 100%;

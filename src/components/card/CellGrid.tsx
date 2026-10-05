@@ -52,9 +52,7 @@ function buildCells(w: number, h: number): Cell[] {
   return cells;
 }
 
-// Measured synchronously before first paint, so a card waiting in the deck never
-// shows an empty white frame. offsetWidth/Height ignore the card's entry
-// rotation, which getBoundingClientRect would include.
+// Measured before first paint, so a waiting card never shows an empty frame.
 export function useCells(ref: RefObject<HTMLElement | null>): Cell[] {
   const [cells, setCells] = useState<Cell[]>([]);
 
@@ -73,9 +71,6 @@ export function useCells(ref: RefObject<HTMLElement | null>): Cell[] {
   return cells;
 }
 
-// The loading grid: cells blink while verifying, then bleed one by one into the
-// verdict colour. Each cell keeps its grey as the base and fades the verdict in
-// on top, so a cell still waiting for its delay never flashes dark.
 export function CellGrid({ cells, phase, verdictColor }: { cells: Cell[]; phase: Phase; verdictColor: string | null }) {
   const bleeding = phase === "bleeding" && verdictColor !== null;
 

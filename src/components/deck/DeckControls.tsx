@@ -17,9 +17,6 @@ interface Props {
   getAnalyser: () => AnalyserNode | null;
 }
 
-// Start and reset sit joined as one pill. Pressing start parts them at once, and
-// the open gap is the "getting ready" signal; the visualizer rises into it once
-// the session is actually listening.
 export function DeckControls({ running, connecting, onToggle, onReset, getAnalyser }: Props) {
   const open = running || connecting;
   // Closing waits for the visualizer to sink first.

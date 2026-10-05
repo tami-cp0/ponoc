@@ -8,10 +8,8 @@ export function useCardDrag() {
   const lift = useMotionValue(0);
   const flip = useMotionValue(0);
 
-  // Light from the top-front: as the card lifts and moves, its shadow slides the
-  // opposite way and grows softer the further it goes. A separate resting
-  // shadow keeps the stack seated and fades out as the card lifts. drop-shadow
-  // (not box-shadow) follows the card's rounded silhouette.
+  // Light from the top-front: the shadow slides opposite the drag and softens
+  // with distance. The resting shadow fades out as the card lifts.
   const shadow = useTransform(() => {
     const l = lift.get();
     const x = dragX.get();
@@ -25,7 +23,6 @@ export function useCardDrag() {
     return `drop-shadow(0 16px 20px rgba(12,12,18,${restAlpha.toFixed(3)})) drop-shadow(${ox.toFixed(1)}px ${oy.toFixed(1)}px ${blur.toFixed(1)}px rgba(12,12,18,${alpha.toFixed(3)}))`;
   });
 
-  // Tilt toward the drag like a held object; the flip adds onto the tilt.
   const tiltY = useTransform(dragX, [-160, 160], [-10, 10], { clamp: true });
   const rotateX = useTransform(dragY, [-160, 160], [8, -8], { clamp: true });
   const rotateY = useTransform(() => tiltY.get() + flip.get());

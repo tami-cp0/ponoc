@@ -1,7 +1,6 @@
 import { extractSources } from "@/shared/sources";
 
-// The prompt asks for 25 words; above this the server logs it. The text itself is
-// never cut: the card shrinks it to fit (components/card/useFitText.ts).
+// Findings longer than this are logged. The card shrinks long text to fit.
 export const MAX_FINDING_WORDS = 30;
 
 // Moves citation links out of the text (they become source buttons).

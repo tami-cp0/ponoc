@@ -54,7 +54,7 @@ export class OpenAIProvider implements LLMProvider {
     const parsed = JSON.parse(response.output_text);
     const finding = splitCitations(parsed.reasoning);
     const sources = [...new Set([...collectSources(response), ...finding.sources])];
-    // Never cut: the card shrinks the text to fit. Logged so the prompt can be tightened.
+    // Logged so the prompt can be tightened.
     if (isTooLong(finding.text)) {
       console.warn(`finding over ${MAX_FINDING_WORDS} words: ${finding.text}`);
     }

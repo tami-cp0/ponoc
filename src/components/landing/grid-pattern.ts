@@ -19,9 +19,7 @@ export const STEP = BOX + GAP;
 const TRUE = "#16a34a";
 const FALSE = "#dc2626";
 
-// Every non-verdict cell is grey — NEVER white. Empty cells are a faint grey
-// just below the bg (so the sheen/flicker can never brighten them past the page
-// surface into a second white); filled greys go darker from there.
+// Greys only, so the flicker never brightens a cell past the page background.
 function boxColor(rand: () => number): string {
   const r = rand();
   if (r < 0.11) return TRUE;

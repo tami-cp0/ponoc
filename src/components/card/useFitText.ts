@@ -3,12 +3,7 @@ import { useLayoutEffect, type RefObject } from "react";
 const MAX_PX = 16;
 const MIN_PX = 11;
 
-// Steps the font size down until the text fits its box, so a finding never
-// overflows the card, even on the smallest phone.
-//
-// Overflow is measured with layout sizes (scrollHeight vs clientHeight), which
-// ignore CSS transforms, so the card's 3D tilt and flip can't skew the result
-// the way getBoundingClientRect would.
+// Steps the font size down until the text fits its box.
 export function useFitText(ref: RefObject<HTMLElement | null>, text: string) {
   useLayoutEffect(() => {
     const el = ref.current;

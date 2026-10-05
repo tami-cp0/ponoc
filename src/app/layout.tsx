@@ -13,7 +13,6 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// The serif-italic accent for select words in landing headlines.
 const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument",
   subsets: ["latin"],
@@ -48,7 +47,6 @@ const expose = localFont({
   ],
 });
 
-// Absolute base for OG/Twitter image URLs.
 const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {

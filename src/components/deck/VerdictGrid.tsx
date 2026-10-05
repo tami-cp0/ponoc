@@ -19,7 +19,6 @@ const VERDICT_COLOR: Record<string, string> = {
 const TARGET_BOX = 14; // px; the real size divides the width evenly
 const BOX_GAP = 1.5;
 
-// One box per verdict, filling left→right; each new row stacks above the last.
 export function VerdictGrid({ boxes }: { boxes: VerdictBox[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [perRow, setPerRow] = useState(1);

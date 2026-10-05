@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 const EMAILS = ["worktamilore@gmail.com", "ishob080@uottawa.ca"];
 const SHOW_MS = 1400;
 
-// Clicking an address copies it; a quiet "copied" appears beside that address.
 export function ReachEmails() {
   const [copied, setCopied] = useState<string | null>(null);
   // Counts copies, so copying again restarts the timer.

@@ -10,8 +10,6 @@ interface Props {
   children: ReactNode;
 }
 
-// A native <dialog> in the settings panel's material. showModal() puts it in the
-// top layer (escaping the deck's 3D transforms), traps focus and closes on Esc.
 export function Dialog({ open, onClose, label, className, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
 
@@ -20,8 +18,7 @@ export function Dialog({ open, onClose, label, className, children }: Props) {
     if (!el) return;
     if (open && !el.open) {
       el.showModal();
-      // Focus the dialog, not its first button, so no focus ring shows until
-      // the user actually navigates with the keyboard.
+      // So no focus ring shows until the user navigates with the keyboard.
       el.focus();
     } else if (!open && el.open) {
       el.close();

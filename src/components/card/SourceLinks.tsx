@@ -14,8 +14,6 @@ const PILL_STYLE: CSSProperties = {
   background: "rgba(255,255,255,0.06)",
 };
 
-// One source → a single labelled pill. Several → a round trigger that bounces
-// the individual source pills up into view.
 export function SourceLinks({ sources }: { sources: string[] }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);

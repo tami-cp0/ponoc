@@ -3,16 +3,12 @@ import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { BOX, GAP, STEP, buildGrid } from "@/components/landing/grid-pattern";
 
-// Social share preview, served at /opengraph-image with the meta tags wired up
-// by Next. ImageResponse can't read woff2 and has no system fonts, so it gets a
-// TTF copy of Bebas, the hero title's font.
+// ImageResponse can't read woff2, so it loads a TTF copy of Bebas.
 export const alt = "ponoc, facts or cap";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// The landing hero's two glows and vignette (.lp-hero-glow), at rest, as SVG:
-// ImageResponse draws CSS radial gradients wrong. Each ellipse fills its own box,
-// like the CSS's closest-side.
+// ImageResponse draws CSS radial gradients wrong, so the glows are SVG.
 const glow = (x: number, y: number, w: number, h: number, rgb: string, alpha: number, end: number) => `
   <radialGradient id="g${x}" cx=".5" cy=".5" r=".5">
     <stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${alpha}"/>
@@ -27,8 +23,6 @@ const background = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height=
   ${glow(-840, 126, 2880, 1260, "0,0,0", 0.06, 0.6)}
 </svg>`;
 
-// The landing's verdict grid (ShimmerGrid + .lp-grid-frame) at the 74 columns
-// it shows on desktop, scaled to the card's inner width, without flicker or sheen.
 const GRID_COLS = 74;
 const S = 1040 / (GRID_COLS * STEP + 40);
 const grid = buildGrid(GRID_COLS);

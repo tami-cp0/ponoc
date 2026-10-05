@@ -13,7 +13,6 @@ import {
 } from "@/shared/protocol";
 import { openMicrophone, type Microphone } from "./microphone";
 
-// "connecting" covers the mic prompt and the socket and speech-to-text handshakes.
 export type Status = "idle" | "connecting" | LiveStatus;
 
 const NOTICE = {
@@ -25,7 +24,6 @@ const NOTICE = {
   offline: "You're offline. Check your connection and try again.",
 };
 
-// The browser knows when it has no network at all; say so instead of a vague failure.
 function failureNotice(listened: boolean): string {
   if (!navigator.onLine) return NOTICE.offline;
   return listened ? NOTICE.lost : NOTICE.failed;
