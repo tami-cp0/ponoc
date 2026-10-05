@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   CLOSE_OUT_OF_CREDITS,
   CLOSE_REPLACED,
@@ -54,13 +54,20 @@ export function useLiveSession(initialCredits: number) {
   // Tells a failed start (never listened) from a dropped session.
   const listenedRef = useRef(false);
 
-  const stop = useCallback(() => {
+  const release = useCallback(() => {
     micRef.current?.stop();
     micRef.current = null;
     socketRef.current?.close();
     socketRef.current = null;
-    setStatus("stopped");
   }, []);
+
+  const stop = useCallback(() => {
+    release();
+    setStatus("stopped");
+  }, [release]);
+
+  // Leaving the page (e.g. logging out) must turn the mic off and hang up.
+  useEffect(() => release, [release]);
 
   const applyEvent = useCallback(
     (event: ServerEvent) => {
