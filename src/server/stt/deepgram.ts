@@ -38,8 +38,8 @@ export class Transcriber {
       const text = message.channel?.alternatives?.[0]?.transcript;
       if (text) this.handlers.onFinal(text);
     });
-    socket.on("close", () => this.onDrop());
-    socket.on("error", () => this.onDrop());
+    socket.on("close", (event) => this.onDrop(`close ${event.code} ${event.reason}`));
+    socket.on("error", (err) => this.onDrop(`error ${err.message}`));
 
     this.closeSocket = () => socket.close();
     this.sendAudio = (audio) => {
@@ -66,9 +66,10 @@ export class Transcriber {
     this.closeSocket();
   }
 
-  private onDrop(): void {
+  private onDrop(cause: string): void {
     if (!this.opened || this.ended) return;
     this.ended = true;
+    console.error("deepgram dropped:", cause);
     this.handlers.onDropped();
   }
 }
