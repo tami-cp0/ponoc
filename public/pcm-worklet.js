@@ -5,7 +5,8 @@ class PCMWorklet extends AudioWorkletProcessor {
     this.ratio = sampleRate / this.targetRate;
     this.carry = 0;
     // Sends 100 ms of audio per message.
-    this.batch = new Int16Array(this.targetRate / 10);
+    this.batchSize = this.targetRate / 10;
+    this.batch = new Int16Array(this.batchSize);
     this.filled = 0;
   }
 
@@ -22,9 +23,10 @@ class PCMWorklet extends AudioWorkletProcessor {
       this.batch[this.filled++] = clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff;
       pos += this.ratio;
 
-      if (this.filled === this.batch.length) {
+      if (this.filled === this.batchSize) {
+        // Transferring detaches the buffer, so this.batch.length is 0 afterwards.
         this.port.postMessage(this.batch.buffer, [this.batch.buffer]);
-        this.batch = new Int16Array(this.batch.length);
+        this.batch = new Int16Array(this.batchSize);
         this.filled = 0;
       }
     }
