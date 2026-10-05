@@ -4,6 +4,7 @@ import { getUser } from "./src/server/auth";
 import { closeDb } from "./src/server/db";
 import { assertEnv, env } from "./src/server/env";
 import { createGateway } from "./src/server/gateway";
+import { publishListening } from "./src/server/live-registry";
 import { OpenAIProvider } from "./src/server/llm/openai";
 import { Session } from "./src/server/session/Session";
 import { getBalanceMicros } from "./src/server/usage/credits";
@@ -26,6 +27,8 @@ app.prepare().then(() => {
     createSession: (send) => new Session(provider, send, prices),
     usageStore: { create: startLiveSession, save: saveUsage, finish: finishLiveSession, read: readLiveBalance },
   });
+
+  publishListening(gateway.listening);
 
   const server = createServer((req, res) => handleRequest(req, res));
 

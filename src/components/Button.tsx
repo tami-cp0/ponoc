@@ -16,6 +16,9 @@ interface Props {
   squareEdge?: "left" | "right" | null;
   // Shows the button held down, as if clicked, when the app presses it itself.
   pressed?: boolean;
+  // Sent with the form when this button submits it.
+  name?: string;
+  value?: string;
 }
 
 export function Button({
@@ -30,6 +33,8 @@ export function Button({
   radius,
   squareEdge,
   pressed,
+  name,
+  value,
 }: Props) {
   const style = {
     width,
@@ -56,6 +61,8 @@ export function Button({
       aria-label={ariaLabel}
       data-square={squareEdge ?? undefined}
       data-pressed={pressed || undefined}
+      name={name}
+      value={value}
     >
       {children}
     </button>

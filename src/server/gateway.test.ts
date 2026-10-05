@@ -194,6 +194,19 @@ describe("gateway", () => {
     second.close();
   });
 
+  it("reports who is listening", async () => {
+    await start();
+    const a = connect({ user: "a" });
+    const b = connect({ user: "b" });
+    await Promise.all([opened(a), opened(b)]);
+    expect(gateway.listening().sort()).toEqual(["a", "b"]);
+    a.close();
+    await closeCode(a);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(gateway.listening()).toEqual(["b"]);
+    b.close();
+  });
+
   it("lets different users connect at the same time", async () => {
     await start();
     const a = connect({ user: "a" });

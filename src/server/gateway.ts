@@ -33,6 +33,8 @@ export interface GatewayOptions {
 
 export interface Gateway {
   handleUpgrade: (req: IncomingMessage, socket: Duplex, head: Buffer) => void;
+  // Ids of users with a live session right now.
+  listening: () => string[];
   shutdown: () => Promise<void>;
 }
 
@@ -192,6 +194,7 @@ export function createGateway(options: GatewayOptions): Gateway {
 
   return {
     handleUpgrade: (req, socket, head) => void handleUpgrade(req, socket, head),
+    listening: () => [...liveByUser.keys()],
     shutdown,
   };
 }

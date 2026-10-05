@@ -7,6 +7,7 @@ export type NotificationType =
   | "signed_out"
   | "credits_granted"
   | "credits_topped_up"
+  | "credits_adjusted"
   | "credits_ran_out"
   | "session_ended";
 
