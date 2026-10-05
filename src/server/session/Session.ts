@@ -98,6 +98,7 @@ export class Session implements LiveSession {
   private async verify(id: string, text: string): Promise<void> {
     const { verdict, usage } = await this.provider.verify(text);
     this.meter.addCall(usage);
+    if (!verdict) throw new Error("unreadable verdict");
     this.meter.addVerdict(verdict.verdict);
     this.send({ type: "claim:verdict", id, result: verdict });
   }

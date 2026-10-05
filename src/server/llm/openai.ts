@@ -34,11 +34,13 @@ export class OpenAIProvider implements LLMProvider {
       text: { format: { type: "json_schema", name: "triage", schema: TRIAGE_SCHEMA, strict: true } },
     });
 
-    const parsed = JSON.parse(response.output_text);
+    const usage = readUsage("triage", response);
+    const parsed = readJson(response.output_text);
+    if (!parsed) return { claim: null, priority: "low", usage };
     return {
       claim: parsed.is_checkable_now ? parsed.canonical_claim : null,
       priority: parsed.priority,
-      usage: readUsage("triage", response),
+      usage,
     };
   }
 
@@ -52,7 +54,10 @@ export class OpenAIProvider implements LLMProvider {
       text: { format: { type: "json_schema", name: "verdict", schema: VERIFY_SCHEMA, strict: true } },
     });
 
-    const parsed = JSON.parse(response.output_text);
+    const usage = readUsage("verify", response);
+    const parsed = readJson(response.output_text);
+    if (!parsed) return { verdict: null, usage };
+
     const finding = splitCitations(parsed.reasoning);
     const sources = pickSources([...parsed.sources, ...finding.sources], collectSources(response));
     // Logged so the prompt can be tightened.
@@ -62,8 +67,18 @@ export class OpenAIProvider implements LLMProvider {
 
     return {
       verdict: { verdict: parsed.verdict, reasoning: finding.text, ...(sources.length ? { sources } : {}) },
-      usage: readUsage("verify", response),
+      usage,
     };
+  }
+}
+
+// The call is paid for even when its reply can't be read (e.g. cut off), so
+// callers still bill the usage.
+function readJson(text: string) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
   }
 }
 

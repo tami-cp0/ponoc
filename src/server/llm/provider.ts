@@ -9,7 +9,8 @@ export interface TriageResult {
 }
 
 export interface VerifyResult {
-  verdict: Verdict;
+  // Null when the model's reply couldn't be read.
+  verdict: Verdict | null;
   usage: CallUsage;
 }
 
