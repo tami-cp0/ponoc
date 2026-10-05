@@ -37,6 +37,8 @@ const BUDGET_CHECK_MS = 1000;
 const FLUSH_INTERVAL_MS = 60_000;
 const TERMINATE_AFTER_MS = 2000;
 
+function ignoreSocketError(): void {}
+
 export function createGateway(options: GatewayOptions): Gateway {
   const wss = new WebSocketServer({ noServer: true });
   const allowedOrigin = new URL(options.siteUrl).origin;
@@ -46,6 +48,10 @@ export function createGateway(options: GatewayOptions): Gateway {
   // Browsers always send Origin on WebSocket handshakes. Checking it stops other
   // sites from opening a socket that rides on the user's cookie.
   async function handleUpgrade(req: IncomingMessage, socket: Duplex, head: Buffer): Promise<void> {
+    // Until ws takes the socket over, nothing else listens for its errors, and an
+    // unhandled one (the client leaving mid-lookup) would crash the process.
+    socket.on("error", ignoreSocketError);
+
     if (req.headers.origin !== allowedOrigin) {
       socket.end("HTTP/1.1 403 Forbidden\r\n\r\n");
       return;
@@ -64,6 +70,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       lookupFailed = true;
     }
 
+    socket.off("error", ignoreSocketError);
     // Accept even when refusing, so the client can read the close code.
     wss.handleUpgrade(req, socket, head, (ws) => {
       if (lookupFailed) ws.close(CLOSE_SERVER_ERROR, "try again");

@@ -1,4 +1,4 @@
-import { createServer, type Server } from "node:http";
+import { createServer, request, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, describe, expect, it } from "vitest";
 import WebSocket from "ws";
@@ -39,10 +39,11 @@ class FakeSession implements LiveSession {
 }
 
 // Cookie header "user=<id>" stands in for a real session cookie. "user=down"
-// simulates the database being unreachable.
+// simulates the database being unreachable; "user=slow" a slow lookup.
 async function fakeGetUser(headers: Headers): Promise<SignedInUser | null> {
   const id = headers.get("cookie")?.replace("user=", "");
   if (id === "down") throw new Error("database unreachable");
+  if (id === "slow") await new Promise((resolve) => setTimeout(resolve, 200));
   return id ? { id, name: id, email: `${id}@test` } : null;
 }
 
@@ -130,6 +131,29 @@ describe("gateway", () => {
     const code = await closeCode(connect({ user: "down" }));
     expect(code).toBe(1011);
     expect(sessions).toHaveLength(0);
+  });
+
+  it("survives a client that disconnects during the sign-in check", async () => {
+    await start();
+    const req = request(url.replace("ws:", "http:"), {
+      headers: {
+        connection: "Upgrade",
+        upgrade: "websocket",
+        origin: SITE,
+        cookie: "user=slow",
+        "sec-websocket-key": "dGhlIHNhbXBsZSBub25jZQ==",
+        "sec-websocket-version": "13",
+      },
+    });
+    req.on("error", () => {});
+    req.on("socket", (socket) => setTimeout(() => socket.resetAndDestroy(), 50));
+    req.end();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(sessions).toHaveLength(0);
+    const ws = connect({ user: "a" });
+    await opened(ws);
+    ws.close();
   });
 
   it("replaces a user's older connection with 4409", async () => {
