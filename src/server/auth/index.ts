@@ -18,6 +18,11 @@ function createAuth() {
       expiresIn: 7 * DAY,
       updateAge: DAY,
     },
+    // Rate limits are keyed by client IP. Railway's edge sets X-Real-IP and clients
+    // can't override it; X-Forwarded-For carries more than one address there.
+    advanced: {
+      ipAddress: { ipAddressHeaders: ["x-real-ip"] },
+    },
     socialProviders: {
       google: {
         clientId: env.googleClientId,
