@@ -62,7 +62,11 @@ async function start() {
   gateway = createGateway({
     siteUrl: SITE,
     getUser: fakeGetUser,
-    getBalance: async (userId) => balances[userId] ?? 1_000_000,
+    // Like the real balance: granted minus whatever usage has been saved.
+    getBalance: async (userId) => {
+      const spent = saved.findLast((s) => s.recordId === `record-${userId}`)?.usage.creditsMicros ?? 0;
+      return (balances[userId] ?? 1_000_000) - spent;
+    },
     createSession: (send) => {
       const session = new FakeSession(send);
       sessions.push(session);
@@ -211,6 +215,21 @@ describe("gateway", () => {
     const code = await closeCode(connect({ user: "a" }));
     expect(code).toBe(CLOSE_OUT_OF_CREDITS);
     expect(sessions).toHaveLength(0);
+  });
+
+  it("counts a replaced session's unsaved spending against the new one", async () => {
+    balances = { a: 1000 };
+    await start();
+    const first = connect({ user: "a" });
+    await opened(first);
+    first.send(Buffer.alloc(800));
+    await new Promise((r) => setTimeout(r, 50));
+
+    const second = connect({ user: "a" });
+    await opened(second);
+    const closed = closeCode(second);
+    second.send(Buffer.alloc(300));
+    expect(await closed).toBe(CLOSE_OUT_OF_CREDITS);
   });
 
   it("stops the session with 4402 once it spends the balance", async () => {

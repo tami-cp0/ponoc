@@ -42,7 +42,7 @@ function ignoreSocketError(): void {}
 export function createGateway(options: GatewayOptions): Gateway {
   const wss = new WebSocketServer({ noServer: true });
   const allowedOrigin = new URL(options.siteUrl).origin;
-  const liveByUser = new Map<string, WebSocket>();
+  const liveByUser = new Map<string, { ws: WebSocket; flush: () => Promise<void> }>();
   const running = new Set<Promise<void>>();
 
   // Browsers always send Origin on WebSocket handshakes. Checking it stops other
@@ -65,7 +65,12 @@ export function createGateway(options: GatewayOptions): Gateway {
     let lookupFailed = false;
     try {
       user = await options.getUser(headers);
-      if (user) balance = await options.getBalance(user.id);
+      if (user) {
+        // This connection will replace any live one; save what that one has spent
+        // so far, or the balance below wouldn't count it.
+        await liveByUser.get(user.id)?.flush();
+        balance = await options.getBalance(user.id);
+      }
     } catch {
       lookupFailed = true;
     }
@@ -81,8 +86,7 @@ export function createGateway(options: GatewayOptions): Gateway {
   }
 
   function run(ws: WebSocket, user: SignedInUser, headers: Headers, balance: number): void {
-    liveByUser.get(user.id)?.close(CLOSE_REPLACED, "replaced");
-    liveByUser.set(user.id, ws);
+    liveByUser.get(user.id)?.ws.close(CLOSE_REPLACED, "replaced");
 
     const send = (event: ServerEvent) => {
       if (ws.readyState !== ws.OPEN) return;
@@ -97,6 +101,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       recordId
         .then((id) => options.usageStore.save(id, session.usage()))
         .catch((err: Error) => console.error("usage save failed:", err.message));
+    liveByUser.set(user.id, { ws, flush });
 
     // Also re-checks the sign-in: signing in on another device deletes this one's
     // auth session, and the live session should stop with it.
@@ -135,7 +140,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         ended = true;
         clearInterval(timer);
         clearInterval(budget);
-        if (liveByUser.get(user.id) === ws) liveByUser.delete(user.id);
+        if (liveByUser.get(user.id)?.ws === ws) liveByUser.delete(user.id);
         session.close().then(flush).finally(resolve);
       };
       ws.on("close", end);
