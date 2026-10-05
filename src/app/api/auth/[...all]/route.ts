@@ -1,15 +1,12 @@
 import { toNextJsHandler } from "better-auth/next-js";
 import { getAuth } from "@/server/auth";
+import { CLIENT_IP_HEADER, clientIp } from "@/server/auth/client-ip";
 
-// TEMPORARY: shows how Railway forwards the client IP, to set trustedProxies. Remove after.
-const IP_HEADERS = ["x-forwarded-for", "x-real-ip", "fastly-client-ip", "true-client-ip", "x-railway-edge"];
-
-function logIpHeaders(request: Request): void {
-  const seen = IP_HEADERS.map((name) => `${name}=${request.headers.get(name) ?? "-"}`).join(" | ");
-  console.log(`[ip] ${new URL(request.url).pathname} ${seen}`);
-}
-
+// Always overwritten, so a client can't pick the IP its rate limits are keyed on.
 export const { GET, POST } = toNextJsHandler((request: Request) => {
-  logIpHeaders(request);
-  return getAuth().handler(request);
+  const headers = new Headers(request.headers);
+  const ip = clientIp(request.headers);
+  if (ip) headers.set(CLIENT_IP_HEADER, ip);
+  else headers.delete(CLIENT_IP_HEADER);
+  return getAuth().handler(new Request(request, { headers }));
 });

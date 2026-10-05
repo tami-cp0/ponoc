@@ -4,6 +4,7 @@ import { APIError } from "better-auth/api";
 import { magicLink } from "better-auth/plugins";
 import { and, eq, ne } from "drizzle-orm";
 import { db, schema } from "../db";
+import { CLIENT_IP_HEADER } from "./client-ip";
 import { Cooldown } from "./cooldown";
 import { sendMagicLinkEmail } from "./email";
 import { env } from "../env";
@@ -23,10 +24,9 @@ function createAuth() {
       expiresIn: 7 * DAY,
       updateAge: DAY,
     },
-    // Rate limits are keyed by client IP. Railway's edge sets X-Real-IP and clients
-    // can't override it; X-Forwarded-For carries more than one address there.
+    // Rate limits are keyed by client IP, which the auth route works out (see client-ip.ts).
     advanced: {
-      ipAddress: { ipAddressHeaders: ["x-real-ip"] },
+      ipAddress: { ipAddressHeaders: [CLIENT_IP_HEADER] },
     },
     socialProviders: {
       google: {
