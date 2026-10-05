@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import type { CardStatus } from "@/shared/protocol";
+import { Dialog } from "../Dialog";
 
 export interface VerdictBox {
   id: string;
@@ -18,11 +19,14 @@ const VERDICT_COLOR: Record<string, string> = {
 
 const TARGET_BOX = 14; // px; the real size divides the width evenly
 const BOX_GAP = 1.5;
+// The stage shows only the newest rows; the rest are in the history popup.
+const MAX_ROWS = 3;
 
 export function VerdictGrid({ boxes }: { boxes: VerdictBox[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [perRow, setPerRow] = useState(1);
   const [boxSize, setBoxSize] = useState(TARGET_BOX);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useLayoutEffect(() => {
     const el = ref.current;
@@ -40,32 +44,60 @@ export function VerdictGrid({ boxes }: { boxes: VerdictBox[] }) {
   }, []);
 
   return (
-    <div className="stage-grid" ref={ref}>
-      <div className="grid-rows" style={{ gap: BOX_GAP }}>
-        {toRows(boxes, perRow)
-          .reverse()
-          .map((row, ri) => (
-            <div key={ri} className="grid-row" style={{ gap: BOX_GAP }}>
-              {row.map((box) => (
-                <motion.span
-                  key={box.id}
-                  className="grid-box"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  style={{
-                    width: boxSize,
-                    height: boxSize,
-                    animationDelay: `${-(hash(box.id) % 14000)}ms`,
-                    animationDuration: `${9000 + (hash(box.id + "dur") % 6000)}ms`,
-                    ["--box" as string]: VERDICT_COLOR[box.status] ?? "#c9c9c9",
-                  }}
-                />
-              ))}
-            </div>
-          ))}
+    <>
+      <div className="stage-grid" ref={ref}>
+        <button
+          type="button"
+          className="grid-rows"
+          style={{ gap: BOX_GAP }}
+          disabled={boxes.length === 0}
+          aria-label="Show every verdict"
+          onClick={() => setHistoryOpen(true)}
+        >
+          {toRows(boxes, perRow)
+            .slice(-MAX_ROWS)
+            .reverse()
+            .map((row) => (
+              <div key={row[0].id} className="grid-row" style={{ gap: BOX_GAP }}>
+                {row.map((box) => (
+                  <motion.span
+                    key={box.id}
+                    className="grid-box"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    style={{
+                      width: boxSize,
+                      height: boxSize,
+                      animationDelay: `${-(hash(box.id) % 14000)}ms`,
+                      animationDuration: `${9000 + (hash(box.id + "dur") % 6000)}ms`,
+                      ["--box" as string]: VERDICT_COLOR[box.status] ?? "#c9c9c9",
+                    }}
+                  />
+                ))}
+              </div>
+            ))}
+        </button>
       </div>
-    </div>
+
+      {/* Every verdict ever, newest first, in flat colour: there can be thousands. */}
+      <Dialog
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        label="Every verdict"
+        className="verdict-history"
+      >
+        <div className="verdict-history-boxes">
+          {[...boxes].reverse().map((box) => (
+            <span
+              key={box.id}
+              className="verdict-history-box"
+              style={{ background: VERDICT_COLOR[box.status] ?? "#c9c9c9" }}
+            />
+          ))}
+        </div>
+      </Dialog>
+    </>
   );
 }
 

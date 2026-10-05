@@ -243,6 +243,16 @@ body {
 .grid-rows {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.grid-rows:disabled {
+  pointer-events: none;
 }
 
 .grid-row {
@@ -951,6 +961,23 @@ body {
 
 .checkout {
   width: min(92vw, 420px);
+}
+
+.verdict-history {
+  width: min(92vw, 720px);
+  padding: 1.25rem;
+}
+.verdict-history-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5px;
+  max-height: min(70vh, 640px);
+  overflow-y: auto;
+}
+.verdict-history-box {
+  width: 12px;
+  height: 12px;
+  border-radius: 1px;
 }
 .checkout-packs {
   display: flex;
