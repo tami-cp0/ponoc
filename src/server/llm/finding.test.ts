@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_FINDING_WORDS, isTooLong, splitCitations } from "./finding";
+import { MAX_FINDING_WORDS, isTooLong, pickSources, splitCitations } from "./finding";
 
 describe("splitCitations", () => {
   it("pulls citation links out into sources, keeping the text whole", () => {
@@ -25,5 +25,23 @@ describe("isTooLong", () => {
 
   it("flags a finding over the limit", () => {
     expect(isTooLong(words(MAX_FINDING_WORDS + 1))).toBe(true);
+  });
+});
+
+describe("pickSources", () => {
+  const searched = ["https://www.toureiffel.paris/en/access-map", "https://en.wikipedia.org/wiki/Eiffel_Tower"];
+
+  it("keeps cited pages the search returned, as the search returned them", () => {
+    expect(pickSources(["https://en.wikipedia.org/wiki/Eiffel_Tower/?utm_source=openai#History"], searched)).toEqual([
+      "https://en.wikipedia.org/wiki/Eiffel_Tower",
+    ]);
+  });
+
+  it("drops cited pages the search never saw", () => {
+    expect(pickSources(["https://made-up.example/eiffel"], searched)).toEqual([]);
+  });
+
+  it("keeps citation order and drops duplicates", () => {
+    expect(pickSources([searched[1], searched[0], searched[1]], searched)).toEqual([searched[1], searched[0]]);
   });
 });

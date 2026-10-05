@@ -39,7 +39,7 @@ Rules:
 export const VERIFY_INSTRUCTIONS = `You are a fact-checker. Use web search to verify the claim.
 If the claim is broadly correct, verdict is true; if it is false or misleading, verdict is false.
 reasoning: the single most decisive piece of evidence for the verdict, stated directly. Keep it to 1-2 short sentences, at most 25 words. Lead with the fact that settles it. Do NOT explain nuance, give background, weigh both sides, or add a "that means..." interpretation. Just the evidence behind true/false.
-Cite the specific page(s) that directly contain the supporting evidence (the actual article, dataset, report, or statement), not a site homepage, section index, or generic landing page. Prefer primary sources (official data, the original report or statement) over aggregators.`;
+sources: the URLs of the specific page(s) from your search that directly contain the evidence (the actual article, dataset, report, or statement), not a site homepage, section index, or generic landing page. At most 3. Prefer primary sources (official data, the original report or statement) over aggregators. Keep URLs out of reasoning.`;
 
 export const VERIFY_SCHEMA = {
   type: "object",
@@ -50,6 +50,11 @@ export const VERIFY_SCHEMA = {
       type: "string",
       description: "The single decisive piece of evidence, in at most 25 words.",
     },
+    sources: {
+      type: "array",
+      items: { type: "string" },
+      description: "URLs of the pages that contain the evidence, at most 3.",
+    },
   },
-  required: ["verdict", "reasoning"],
+  required: ["verdict", "reasoning", "sources"],
 } as const;

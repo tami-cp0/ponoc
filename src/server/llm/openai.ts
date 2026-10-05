@@ -4,7 +4,7 @@ import { env } from "../env";
 import type { CallUsage } from "../usage/UsageMeter";
 import type { ModelRole } from "../usage/pricing";
 import type { LLMProvider, TriageResult, VerifyResult } from "./provider";
-import { MAX_FINDING_WORDS, isTooLong, splitCitations } from "./finding";
+import { MAX_FINDING_WORDS, isTooLong, pickSources, splitCitations } from "./finding";
 import { TRIAGE_INSTRUCTIONS, TRIAGE_SCHEMA, VERIFY_INSTRUCTIONS, VERIFY_SCHEMA } from "./prompts";
 
 interface OutputItem {
@@ -48,12 +48,13 @@ export class OpenAIProvider implements LLMProvider {
       instructions: VERIFY_INSTRUCTIONS,
       input: claim,
       tools: [{ type: "web_search" }],
+      include: ["web_search_call.action.sources"],
       text: { format: { type: "json_schema", name: "verdict", schema: VERIFY_SCHEMA, strict: true } },
     });
 
     const parsed = JSON.parse(response.output_text);
     const finding = splitCitations(parsed.reasoning);
-    const sources = [...new Set([...collectSources(response), ...finding.sources])];
+    const sources = pickSources([...parsed.sources, ...finding.sources], collectSources(response));
     // Logged so the prompt can be tightened.
     if (isTooLong(finding.text)) {
       console.warn(`finding over ${MAX_FINDING_WORDS} words: ${finding.text}`);
