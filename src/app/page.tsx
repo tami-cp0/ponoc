@@ -20,10 +20,10 @@ const SHOWCASE_FALSE: Card = {
 
 const SHOWCASE_TRUE: Card = {
   id: "showcase-true",
-  claim: "A banana is a berry, but a strawberry is not.",
+  claim: "Ketchup was once sold as medicine.",
   status: "true",
   reasoning:
-    "Botanically a banana fits the definition of a berry, while a strawberry does not ([sciencefocus.com](https://www.sciencefocus.com/nature/is-a-banana-a-berry)).",
+    "Yes. In the 1830s an Ohio doctor sold tomato ketchup in pill form as a cure for indigestion and diarrhea ([tastingtable.com](https://www.tastingtable.com/1497845/ketchup-origin-medicine/)).",
 };
 
 const FEATURES = [
