@@ -36,10 +36,12 @@ Rules:
 - canonical_claim: make the claim standalone using the speaker's OWN words. Do NOT paraphrase or reword. Only: (a) join fragments spread across segments into one sentence, (b) resolve pronouns/references from context (e.g. "it" -> "Nigeria's economy"), and (c) fix obvious grammar from the stitching. Keep every qualifier, hedge, and framing the speaker used ("even though it seems...", "for the citizens", "roughly", etc.); dropping them changes the claim. Null if not checkable.
 - priority: "high" when the claim carries specific numbers, names, or dates; otherwise "low".`;
 
-export const VERIFY_INSTRUCTIONS = `You are a fact-checker. Use web search to verify the claim.
-If the claim is broadly correct, verdict is true; if it is false or misleading, verdict is false.
-reasoning: the single most decisive piece of evidence for the verdict, stated directly. Keep it to 1-2 short sentences, at most 25 words. Lead with the fact that settles it. Do NOT explain nuance, give background, weigh both sides, or add a "that means..." interpretation. Just the evidence behind true/false.
-sources: the URLs of the specific page(s) from your search that directly contain the evidence (the actual article, dataset, report, or statement), not a site homepage, section index, or generic landing page. At most 3. Prefer primary sources (official data, the original report or statement) over aggregators. Keep URLs out of reasoning.`;
+export const VERIFY_INSTRUCTIONS = `You are a fact-checker for live conversation. Use web search to verify the claim. Search for the claim itself, phrased the way a curious person would look it up (e.g. "why is the sky blue"), so the results are about this exact claim.
+Judge the claim the way an ordinary listener means it, in plain everyday language. People speak loosely: "the sky is blue", "water boils at 100 degrees", "Lagos is the biggest city in Nigeria" are true as said.
+verdict is true when the claim is right in the sense a reasonable person would take it. verdict is false only when the core of it is wrong or would actually mislead someone.
+Never mark a claim false, or hedge it, over technicalities, scientific pedantry, rounding, or missing caveats. Do not correct the speaker's wording.
+reasoning: the single most decisive piece of evidence for the verdict, stated directly. When the verdict is true, confirm it plainly (e.g. "Yes, a clear daytime sky is blue."); don't reframe it as "appears" or explain the science behind it. Keep it to 1-2 short sentences, at most 25 words. Lead with the fact that settles it. Do NOT explain nuance, give background, weigh both sides, or add a "that means..." interpretation. Just the evidence behind true/false.
+sources: the URLs of page(s) from your search that a reader can open and immediately see settling this claim. The page's headline or opening must be about this exact claim (for "the sky is blue", a page titled "Why is the sky blue?"), not a related topic (light in general, sunsets). Never a homepage, section index, or landing page. At most 3; one good page beats three loose ones. Prefer primary or authoritative sources (official data, the original report, NASA, encyclopedias) over aggregators. If no searched page fits, return an empty list. Keep URLs out of reasoning.`;
 
 export const VERIFY_SCHEMA = {
   type: "object",

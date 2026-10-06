@@ -4,12 +4,13 @@ import { env } from "../env";
 import type { CallUsage } from "../usage/UsageMeter";
 import type { ModelRole } from "../usage/pricing";
 import type { LLMProvider, TriageResult, VerifyResult } from "./provider";
-import { MAX_FINDING_WORDS, isTooLong, pickSources, splitCitations } from "./finding";
+import { MAX_FINDING_WORDS, dropDeadLinks, isTooLong, pickSources, splitCitations } from "./finding";
 import { TRIAGE_INSTRUCTIONS, TRIAGE_SCHEMA, VERIFY_INSTRUCTIONS, VERIFY_SCHEMA } from "./prompts";
 
 interface OutputItem {
   type: string;
   action?: { sources?: { url?: string }[] };
+  content?: { annotations?: { type: string; url?: string }[] }[];
 }
 
 interface ResponseLike {
@@ -50,6 +51,9 @@ export class OpenAIProvider implements LLMProvider {
       instructions: VERIFY_INSTRUCTIONS,
       input: claim,
       tools: [{ type: "web_search" }],
+      // Without this the model answers common-knowledge claims from memory,
+      // and a verdict with no search has no source to show.
+      tool_choice: "required",
       include: ["web_search_call.action.sources"],
       text: { format: { type: "json_schema", name: "verdict", schema: VERIFY_SCHEMA, strict: true } },
     });
@@ -59,7 +63,9 @@ export class OpenAIProvider implements LLMProvider {
     if (!parsed) return { verdict: null, usage };
 
     const finding = splitCitations(parsed.reasoning);
-    const sources = pickSources([...parsed.sources, ...finding.sources], collectSources(response));
+    const sources = await dropDeadLinks(
+      pickSources([...parsed.sources, ...finding.sources], collectSources(response)),
+    );
     // Logged so the prompt can be tightened.
     if (isTooLong(finding.text)) {
       console.warn(`finding over ${MAX_FINDING_WORDS} words: ${finding.text}`);
@@ -97,8 +103,17 @@ function readUsage(role: ModelRole, response: ResponseLike): CallUsage {
   };
 }
 
+// Pages the search returned: inline url_citation annotations first (what the
+// model actually leaned on), then the search call's result list.
 function collectSources(response: ResponseLike): string[] {
   const urls = new Set<string>();
+  for (const item of outputItems(response)) {
+    for (const part of item.content ?? []) {
+      for (const note of part.annotations ?? []) {
+        if (note.type === "url_citation" && note.url) urls.add(cleanUrl(note.url));
+      }
+    }
+  }
   for (const item of outputItems(response)) {
     for (const source of item.action?.sources ?? []) {
       if (source.url) urls.add(cleanUrl(source.url));
