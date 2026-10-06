@@ -9,13 +9,13 @@ interface Props {
 export function VerdictFace({ claim, word, onShowFinding }: Props) {
   return (
     <>
-      <span className="font-mono text-[10px] uppercase tracking-[0.24em]" style={{ color: "rgba(255,255,255,0.55)" }}>
+      <span className="-mt-2 font-mono text-[8px] uppercase tracking-[0.24em]" style={{ color: "rgba(255,255,255,0.55)" }}>
         claim
       </span>
-      <p className="mt-3 font-expose text-lg leading-[1.5]" style={{ color: "rgba(255,255,255,0.85)" }}>
+      <p className="mt-1 font-expose text-lg leading-[1.5]" style={{ color: "rgba(255,255,255,0.85)" }}>
         {claim}
       </p>
-      <div className="flex flex-1 items-center justify-center py-4">
+      <div className="flex flex-1 items-center justify-center py-2">
         <span
           className="stamp block whitespace-nowrap font-array-wide font-semibold leading-none tracking-[-0.03em] text-white"
           style={{ fontSize: "40cqw" }}

@@ -14,6 +14,8 @@ const VERDICT = {
 
 const ARTICLE = "absolute inset-0 flex flex-col overflow-hidden px-7 pt-6 pb-6";
 const FACE = "face relative z-20 flex h-full flex-col";
+// About when the deck's flip spring passes 90°, so each side vanishes as it turns away.
+const HALF_TURN = "visibility 0s linear 100ms";
 
 interface Props {
   card: Card;
@@ -84,8 +86,11 @@ export function ClaimCard({ card, flipped, onToggleFlip, onVerdictReady }: Props
           backfaceVisibility: controlled ? "hidden" : undefined,
           WebkitBackfaceVisibility: controlled ? "hidden" : undefined,
           borderRadius: controlled ? "inherit" : undefined,
-          // backface-visibility only hides the far side visually; it is still
-          // hit-testable, so switch off whichever face is turned away.
+          // backface-visibility alone lets composited children (the face's
+          // entry animation, the stamp) bleed through, so hide the side that is
+          // turned away too. It is also still hit-testable without this.
+          visibility: controlled && showFinding ? "hidden" : "visible",
+          transition: controlled ? HALF_TURN : undefined,
           pointerEvents: controlled && showFinding ? "none" : undefined,
         }}
       >
@@ -120,6 +125,8 @@ export function ClaimCard({ card, flipped, onToggleFlip, onVerdictReady }: Props
             backfaceVisibility: "hidden",
             WebkitBackfaceVisibility: "hidden",
             borderRadius: "inherit",
+            visibility: showFinding ? "visible" : "hidden",
+            transition: HALF_TURN,
             pointerEvents: showFinding ? undefined : "none",
           }}
           onClick={(e) => e.stopPropagation()}

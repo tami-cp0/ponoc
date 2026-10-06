@@ -7,9 +7,8 @@ import { ClaimCard } from "../card/ClaimCard";
 import { ChevronIcon } from "../icons";
 import { DeckControls } from "./DeckControls";
 import { VerdictGrid, type VerdictBox } from "./VerdictGrid";
-import { useCardDrag } from "./useCardDrag";
+import { FLIP_SPRING, SWIPE_THRESHOLD, useCardDrag } from "./useCardDrag";
 
-const SWIPE_THRESHOLD = 90;
 const VISIBLE_STACK = 4;
 
 const exitVariants = {
@@ -82,7 +81,7 @@ export function ClaimDeck({ cards, running, stopping, connecting, verdictHistory
     if (!current || !readyIds.current.has(current.id) || !current.reasoning) return;
     const next = flippedId === current.id ? null : current.id;
     setFlippedId(next);
-    animate(flip, next ? 180 : 0, { type: "spring", stiffness: 260, damping: 30 });
+    animate(flip, next ? 180 : 0, FLIP_SPRING);
   };
 
   const faceFront = () => {

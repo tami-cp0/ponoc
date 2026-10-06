@@ -1,14 +1,26 @@
 "use client";
 
-import { motion, useMotionValue, useTransform } from "motion/react";
+import { useState } from "react";
+import { animate, motion, type PanInfo } from "motion/react";
 import type { Card } from "@/shared/protocol";
 import { ClaimCard } from "../card/ClaimCard";
+import { FLIP_SPRING, SWIPE_THRESHOLD, useCardDrag } from "../deck/useCardDrag";
 
 export function ShowcaseCard({ card }: { card: Card }) {
-  const dragX = useMotionValue(0);
-  const dragY = useMotionValue(0);
-  const tiltY = useTransform(dragX, [-160, 160], [-10, 10], { clamp: true });
-  const rotateX = useTransform(dragY, [-160, 160], [8, -8], { clamp: true });
+  const { dragX, dragY, flip, rotateX, rotateY } = useCardDrag();
+  const [flipped, setFlipped] = useState(false);
+
+  const toggleFlip = () => {
+    const next = !flipped;
+    setFlipped(next);
+    animate(flip, next ? 180 : 0, FLIP_SPRING);
+  };
+
+  // Same gesture as the deck: a mostly-upward swipe turns the card around.
+  const onDragEnd = (_: unknown, info: PanInfo) => {
+    const { x, y } = info.offset;
+    if (Math.abs(y) > Math.abs(x) && y < -SWIPE_THRESHOLD) toggleFlip();
+  };
 
   return (
     <div className="lp-showcase deck-page-3d reveal">
@@ -19,6 +31,7 @@ export function ShowcaseCard({ card }: { card: Card }) {
         dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
         dragElastic={0.28}
         dragTransition={{ bounceStiffness: 500, bounceDamping: 34 }}
+        onDragEnd={onDragEnd}
         whileDrag={{ cursor: "grabbing" }}
       >
         <motion.div
@@ -28,10 +41,10 @@ export function ShowcaseCard({ card }: { card: Card }) {
             transformStyle: "preserve-3d",
             transformPerspective: 1200,
             rotateX,
-            rotateY: tiltY,
+            rotateY,
           }}
         >
-          <ClaimCard card={card} />
+          <ClaimCard card={card} flipped={flipped} onToggleFlip={toggleFlip} />
         </motion.div>
       </motion.div>
     </div>

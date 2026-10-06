@@ -1,5 +1,9 @@
 import { useMotionValue, useTransform } from "motion/react";
 
+// How far a card has to be dragged before letting go counts as a swipe.
+export const SWIPE_THRESHOLD = 90;
+export const FLIP_SPRING = { type: "spring", stiffness: 260, damping: 30 } as const;
+
 // Motion values for the top card. dragX/dragY are the drag offset in px, lift
 // eases 0→1 while the card is held, flip animates 0↔180 when it turns around.
 export function useCardDrag() {
