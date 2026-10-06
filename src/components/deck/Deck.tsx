@@ -21,8 +21,20 @@ interface Props {
 }
 
 export function Deck({ account, credits: initialCredits, verdictHistory, showWelcome }: Props) {
-  const { cards, status, stopping, credits, ranOut, notice, start, stop, dismissRanOut, dismissNotice, getAnalyser } =
-    useLiveSession(initialCredits);
+  const {
+    cards,
+    status,
+    stopping,
+    credits,
+    ranOut,
+    notice,
+    start,
+    stop,
+    showRanOut,
+    dismissRanOut,
+    dismissNotice,
+    getAnalyser,
+  } = useLiveSession(initialCredits);
   const dialog = useUrlDialog();
   const [welcomeOpen, setWelcomeOpen] = useState(showWelcome);
 
@@ -38,7 +50,7 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
 
   const toggle = () => {
     if (running || connecting) stop();
-    else if (credits <= 0) openCheckout();
+    else if (credits <= 0) showRanOut();
     else listen();
   };
 

@@ -23,6 +23,9 @@ export type ServerEvent =
   // Credits left, updated while listening.
   | { type: "credits"; balance: number };
 
+// Sent as text; audio goes as binary frames.
+export type ClientEvent = { type: "stop" };
+
 export const CLOSE_UNAUTHORIZED = 4401;
 export const CLOSE_OUT_OF_CREDITS = 4402;
 export const CLOSE_REPLACED = 4409;

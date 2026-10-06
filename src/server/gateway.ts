@@ -2,7 +2,13 @@ import type { IncomingMessage } from "node:http";
 import type { Duplex } from "node:stream";
 import { fromNodeHeaders } from "better-auth/node";
 import { WebSocketServer, type WebSocket } from "ws";
-import { CLOSE_OUT_OF_CREDITS, CLOSE_REPLACED, CLOSE_UNAUTHORIZED, type ServerEvent } from "@/shared/protocol";
+import {
+  CLOSE_OUT_OF_CREDITS,
+  CLOSE_REPLACED,
+  CLOSE_UNAUTHORIZED,
+  type ClientEvent,
+  type ServerEvent,
+} from "@/shared/protocol";
 import type { SignedInUser } from "./auth";
 import type { UsageSnapshot } from "./usage/UsageMeter";
 
@@ -96,13 +102,17 @@ export function createGateway(options: GatewayOptions): Gateway {
   function run(ws: WebSocket, user: SignedInUser, headers: Headers, balance: number): void {
     liveByUser.get(user.id)?.ws.close(CLOSE_REPLACED, "replaced");
 
+    // Set once the user presses Stop: the socket stays open while verdicts drain.
+    let stopped = false;
     const send = (event: ServerEvent) => {
       if (ws.readyState !== ws.OPEN) return;
       ws.send(JSON.stringify(event));
       // The session ended itself (e.g. speech-to-text dropped): hang up.
-      if (event.type === "status" && event.state === "stopped") ws.close(1000, "session ended");
+      if (event.type === "status" && event.state === "stopped" && !stopped) ws.close(1000, "session ended");
     };
     const session = options.createSession(send);
+    let closing: Promise<void> | null = null;
+    const closeSession = () => (closing ??= session.close());
     const recordId = options.usageStore.create(user.id);
 
     const flush = () =>
@@ -156,8 +166,24 @@ export function createGateway(options: GatewayOptions): Gateway {
       ws.close();
     });
 
+    // No longer listening, so a new Start doesn't replace this socket and cut off its verdicts.
+    const stop = () => {
+      if (stopped) return;
+      stopped = true;
+      if (liveByUser.get(user.id)?.ws === ws) liveByUser.delete(user.id);
+      void closeSession().then(() => ws.close(1000, "stopped"));
+    };
+
     ws.on("message", (data, isBinary) => {
-      if (isBinary) session.audio(data as Buffer);
+      if (isBinary) {
+        if (!stopped) session.audio(data as Buffer);
+        return;
+      }
+      let event: ClientEvent | null = null;
+      try {
+        event = JSON.parse(data.toString());
+      } catch {}
+      if (event?.type === "stop") stop();
     });
 
     const finished = new Promise<void>((resolve) => {
@@ -173,7 +199,7 @@ export function createGateway(options: GatewayOptions): Gateway {
           recordId
             .then((id) => options.usageStore.finish(id, user.id, session.usage(), ranOut))
             .catch((err: Error) => console.error("usage save failed:", err.message));
-        session.close().then(finish).finally(resolve);
+        closeSession().then(finish).finally(resolve);
       };
       ws.on("close", end);
       ws.on("error", end);

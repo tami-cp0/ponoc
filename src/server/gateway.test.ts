@@ -24,6 +24,8 @@ const EMPTY_USAGE: UsageSnapshot = {
 class FakeSession implements LiveSession {
   audioBytes = 0;
   closed = false;
+  // Stands in for verdicts still being worked on when the session closes.
+  draining: (() => Promise<void>) | null = null;
   constructor(readonly send: (event: ServerEvent) => void) {}
   async start() {}
   audio(chunk: Buffer) {
@@ -31,6 +33,7 @@ class FakeSession implements LiveSession {
   }
   async close() {
     this.closed = true;
+    await this.draining?.();
   }
   // Each audio byte costs one micro-credit, so tests can spend credits by sending audio.
   usage(): UsageSnapshot {
@@ -242,6 +245,39 @@ describe("gateway", () => {
     const closed = closeCode(ws);
     sessions[0].send({ type: "status", state: "stopped" });
     expect(await closed).toBe(1000);
+  });
+
+  it("on Stop, delivers verdicts still verifying before hanging up", async () => {
+    await start();
+    const ws = connect({ user: "a" });
+    await opened(ws);
+    const received = messages(ws);
+    const closed = closeCode(ws);
+    sessions[0].draining = async () => {
+      sessions[0].send({ type: "status", state: "stopped" });
+      await new Promise((r) => setTimeout(r, 30));
+      sessions[0].send({ type: "claim:verdict", id: "c1", result: { verdict: true, reasoning: "Yes." } });
+    };
+
+    ws.send(JSON.stringify({ type: "stop" }));
+    expect(await closed).toBe(1000);
+    expect(received.at(-1)).toEqual({ type: "claim:verdict", id: "c1", result: { verdict: true, reasoning: "Yes." } });
+  });
+
+  it("doesn't let a new Start cut off a stopped session's verdicts", async () => {
+    await start();
+    const first = connect({ user: "a" });
+    await opened(first);
+    const firstClosed = closeCode(first);
+    sessions[0].draining = () => new Promise((r) => setTimeout(r, 50));
+    first.send(JSON.stringify({ type: "stop" }));
+    await new Promise((r) => setTimeout(r, 10));
+
+    const second = connect({ user: "a" });
+    await opened(second);
+    expect(gateway.listening()).toEqual(["a"]);
+    expect(await firstClosed).toBe(1000);
+    second.close();
   });
 
   it("closes with 4402 when the user has no credits", async () => {
