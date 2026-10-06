@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
+  title: "Privacy and terms",
+  alternates: { canonical: "/legal" },
   description: "How ponoc handles your data, and the terms of using it.",
 };
 

@@ -29,17 +29,34 @@ const SHOWCASE_TRUE: Card = {
 const FEATURES = [
   {
     title: "Hears the claim",
-    desc: "It listens to your voice and catches what can be checked.",
+    desc: "It listens to the room and picks out what can be checked. It skips opinions and predictions.",
   },
   {
-    title: "Checks the source",
-    desc: "It looks it up and shows the evidence.",
+    title: "Finds the evidence",
+    desc: "It searches the web and links the page that settles it.",
   },
   {
     title: "Says true or false",
-    desc: "It settles the claim on the spot, while it still matters.",
+    desc: "You get the verdict while everyone is still on the topic.",
   },
 ];
+
+// Structured data, so search engines can show ponoc as an app with a free start.
+const SCHEMA = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "ponoc",
+  applicationCategory: "UtilitiesApplication",
+  operatingSystem: "Any (web browser)",
+  description:
+    "A live fact-checker. It listens to your conversation, checks each claim against the web, and calls it true or false with the source.",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+    description: "Free to try, no card needed",
+  },
+};
 
 export default function LandingPage() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -65,6 +82,7 @@ export default function LandingPage() {
 
   return (
     <div className="landing" ref={rootRef}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA) }} />
       <ColumnLines />
       <div className="lp-hero-wrap">
         <div className="lp-hero">
@@ -82,12 +100,15 @@ export default function LandingPage() {
           <div className="lp-hero-content">
             <div className="lp-hero-grid">
               <div className="lp-hero-head">
-                <h1 className="lp-hero-title font-bebas reveal">PONOC.</h1>
+                <h1 className="lp-hero-title font-bebas reveal">
+                  PONOC.<span className="sr-only"> Live fact-checker for real conversations</span>
+                </h1>
               </div>
               <div className="lp-hero-aside reveal">
                 <p className="lp-hero-lede">
-                  ponoc calls facts or cap, live. It listens, verifies what it hears, and tells
-                  you whether each claim is true or false.
+                  ponoc calls facts or cap, live. It listens to the conversation and tells you
+                  whether each claim is true or false, with a link to the proof. Free to try, no
+                  card needed.
                 </p>
                 <Button href="/app" width="100%">
                   Start listening
@@ -129,8 +150,8 @@ export default function LandingPage() {
       <section className="lp-section" id="history">
         <div className="lp-container">
           <div className="lp-history-head reveal">
-            <span className="lp-label">Every verdict</span>
-            <h2 className="lp-product-title font-array-wide">Since day one.</h2>
+            <span className="lp-label">Your record</span>
+            <h2 className="lp-product-title font-array-wide">One square for every claim.</h2>
           </div>
           <div className="reveal">
             <ShimmerGrid />
@@ -149,7 +170,7 @@ export default function LandingPage() {
               </h2>
             </div>
             <Button href="/app">
-              Open the deck
+              Start listening
               <ArrowRightIcon />
             </Button>
           </div>
@@ -159,7 +180,7 @@ export default function LandingPage() {
               <h3>Product</h3>
               <ul>
                 <li>
-                  <Link href="/app">Open deck</Link>
+                  <Link href="/app">Open the app</Link>
                 </li>
                 <li>
                   <a href="#product">Product</a>

@@ -51,9 +51,11 @@ const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Ponoc",
-  description:
-    "ponoc calls facts or cap, live. It listens to what you say, checks it against the web, and rules each claim true or false.",
+  title: {
+    default: "ponoc: live fact-checker",
+    template: "%s | ponoc",
+  },
+  description: "ponoc is a live fact-checker. It listens to your conversation, checks each claim against the web, and calls it true or false with the source. Try it free.",
   keywords: [
     "realtime fact-checking",
     "facts or cap",
@@ -69,13 +71,13 @@ export const metadata: Metadata = {
     type: "website",
     url: siteUrl,
     siteName: "ponoc",
-    title: "ponoc, facts or cap",
-    description: "ponoc calls facts or cap, live. It listens to what you say, checks it against the web, and rules each claim true or false.",
+    title: "ponoc: facts or cap, called live",
+    description: "ponoc is a live fact-checker. It listens to your conversation, checks each claim against the web, and calls it true or false with the source. Try it free.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ponoc, facts or cap",
-    description: "ponoc calls facts or cap, live. It listens to what you say, checks it against the web, and rules each claim true or false.",
+    title: "ponoc: facts or cap, called live",
+    description: "ponoc is a live fact-checker. It listens to your conversation, checks each claim against the web, and calls it true or false with the source. Try it free.",
     creator: "@tami_cp0",
   },
   robots: {

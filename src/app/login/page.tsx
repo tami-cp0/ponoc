@@ -1,8 +1,14 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ColumnLines } from "@/components/ColumnLines";
 import { LoginForm } from "@/components/login/LoginForm";
 import { getUser } from "@/server/auth";
+
+export const metadata: Metadata = {
+  title: "Log in",
+  robots: { index: false },
+};
 
 interface Props {
   searchParams: Promise<{ error?: string }>;
