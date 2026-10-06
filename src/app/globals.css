@@ -382,6 +382,52 @@ body {
   }
 }
 
+/* Short desktop windows (e.g. a 1080p laptop at 125% scaling). Below 814px tall
+   the fixed-size deck pushes the controls under the header, so here the deck
+   and the controls shrink together to fit the height: header 64 + gap 12 +
+   controls 82s + gap 16 + deck 530s + gap 12 + verdict grid 64, where s is the
+   shared scale. Solving for the deck gives (100vh - 168px) * 530 / 612.
+   Taller windows and mobile never match. */
+@media (min-width: 641px) and (max-height: 813px) {
+  .deck-page-3d {
+    --deck-h: min(530px, calc((100vh - 168px) * 530 / 612));
+    /* deck-h / 530px as a plain number. */
+    --deck-scale: tan(atan2(var(--deck-h), 530px));
+  }
+
+  .deck-page-3d .stage-deck {
+    top: calc(28px + var(--deck-h) * 82 / 530);
+    bottom: auto;
+    height: var(--deck-h);
+  }
+
+  .deck-page-3d .deck-viewport {
+    height: var(--deck-h);
+    width: calc(var(--deck-h) * 420 / 530);
+  }
+
+  .deck-page-3d .deck-card {
+    height: calc(var(--deck-h) * 420 / 530);
+    width: calc(var(--deck-h) * 300 / 530); /* 5:7 card ratio */
+  }
+
+  .deck-page-3d .stage-controls {
+    top: 12px;
+    transform: translateX(-50%) scale(var(--deck-scale));
+    transform-origin: top center;
+  }
+
+  /* Set on the header, as the base --gear-size on .deck-page-3d comes later in this file. */
+  .deck-page-3d .deck-header {
+    --gear-size: calc(46px * var(--deck-scale));
+  }
+
+  .deck-page-3d .deck-header .btn svg {
+    width: calc(30px * var(--deck-scale));
+    height: calc(30px * var(--deck-scale));
+  }
+}
+
 .notfound {
   flex: 1;
   display: flex;
