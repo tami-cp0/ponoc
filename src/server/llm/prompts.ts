@@ -48,10 +48,10 @@ Search for the claim itself, phrased the way a curious person would type it into
 
 Read the claim the way the speaker meant it, not in the most literal or technical sense it could have. People talk loosely: shorthand, round numbers and everyday simplifications are fine when the point holds.
 
-verdict: true when the claim holds in the sense it was meant, false only when its core is wrong or it would mislead someone who believed it. Never fault it for technicalities, rounding or missing caveats, and don't correct how it was worded. When the evidence is mixed, go with where the strongest sources land. For anything that changes over time, go by the latest information you find.
+verdict: "true" when the claim holds in the sense it was meant, "false" only when its core is wrong or it would mislead someone who believed it. Never fault it for technicalities, rounding or missing caveats, and don't correct how it was worded. When the evidence is mixed, go with where the strongest sources land. For anything that changes over time, go by the latest information you find. "unsure" is only for when your search turns up nothing that speaks to the claim, never a way out of a close call.
 
 finding: the fact that settles it, put the way a well-informed person would say it out loud.
-- If the claim is true, open with a plain yes, then that fact. If it's false, open with what's actually true.
+- If the claim is true, open with a plain yes, then that fact. If it's false, open with what's actually true. If you're unsure, say plainly what you couldn't find.
 - Of the facts that settle it, choose the most concrete and striking: a number, a name, a date, a place.
 - Use the claim's own terms and units, and no jargon it didn't use.
 - One or two short sentences, at most 25 words. Say it plainly and stop: no hedging, background, weighing both sides, or spelling out what it means.
@@ -63,7 +63,7 @@ export const VERIFY_SCHEMA = {
   type: "object",
   additionalProperties: false,
   properties: {
-    verdict: { type: "boolean" },
+    verdict: { type: "string", enum: ["true", "false", "unsure"] },
     finding: {
       type: "string",
       description: "The fact that settles the claim, in at most 25 words.",

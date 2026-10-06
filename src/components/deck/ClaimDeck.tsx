@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { AnimatePresence, animate, motion, type PanInfo } from "motion/react";
-import type { Card } from "@/shared/protocol";
+import type { Card, VerdictStatus } from "@/shared/protocol";
 import { ClaimCard } from "../card/ClaimCard";
 import { ChevronIcon } from "../icons";
 import { DeckControls } from "./DeckControls";
@@ -34,8 +34,8 @@ interface Props {
   running: boolean;
   stopping: boolean;
   connecting: boolean;
-  // Every past verdict, oldest first (true = TRUE).
-  verdictHistory: boolean[];
+  // Every past verdict, oldest first.
+  verdictHistory: VerdictStatus[];
   onToggle: () => void;
   getAnalyser: () => AnalyserNode | null;
 }
@@ -44,7 +44,7 @@ export function ClaimDeck({ cards, running, stopping, connecting, verdictHistory
   const [deck, setDeck] = useState<Card[]>([]);
   const [session, setSession] = useState<Card[]>([]);
   const [verdicts, setVerdicts] = useState<VerdictBox[]>(() =>
-    verdictHistory.map((isTrue, i) => ({ id: `past-${i}`, claimId: `past-${i}`, status: isTrue ? "true" : "false" })),
+    verdictHistory.map((status, i) => ({ id: `past-${i}`, claimId: `past-${i}`, status })),
   );
   // Ids ever taken into the deck. Kept through resets, so cleared cards never come back.
   const [seenIds, setSeenIds] = useState(new Set<string>());
@@ -63,7 +63,7 @@ export function ClaimDeck({ cards, running, stopping, connecting, verdictHistory
     setVerdicts((boxes) => {
       const logged = new Set(boxes.map((b) => b.claimId));
       const added = cards
-        .filter((c) => (c.status === "true" || c.status === "false") && !logged.has(c.id))
+        .filter((c) => c.status !== "verifying" && !logged.has(c.id))
         .map((c) => ({ id: `${c.id}-box`, claimId: c.id, status: c.status }));
       return added.length ? [...boxes, ...added] : boxes;
     });

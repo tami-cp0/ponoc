@@ -18,6 +18,7 @@ describe("UsageMeter", () => {
       webSearches: 0,
       claimsTrue: 0,
       claimsFalse: 0,
+      claimsUnsure: 0,
       claimsError: 0,
       costMicros: 0,
       creditsMicros: 0,
@@ -67,10 +68,12 @@ describe("UsageMeter", () => {
     meter.addVerdict(true);
     meter.addVerdict(true);
     meter.addVerdict(false);
+    meter.addVerdict(null);
     meter.addError();
     const snap = meter.snapshot();
     expect(snap.claimsTrue).toBe(2);
     expect(snap.claimsFalse).toBe(1);
+    expect(snap.claimsUnsure).toBe(1);
     expect(snap.claimsError).toBe(1);
   });
 });

@@ -15,6 +15,7 @@ export interface VerdictBox {
 const VERDICT_COLOR: Record<string, string> = {
   true: "#1C5334",
   false: "#8E1A1A",
+  unsure: "#494949",
   verifying: "#c9c9c9",
 };
 

@@ -17,6 +17,7 @@ export interface UsageSnapshot {
   webSearches: number;
   claimsTrue: number;
   claimsFalse: number;
+  claimsUnsure: number;
   claimsError: number;
   costMicros: number;
   creditsMicros: number;
@@ -27,6 +28,7 @@ export class UsageMeter {
   private webSearches = 0;
   private claimsTrue = 0;
   private claimsFalse = 0;
+  private claimsUnsure = 0;
   private claimsError = 0;
   private readonly triage: TokenCount = { input: 0, output: 0 };
   private readonly verify: TokenCount = { input: 0, output: 0 };
@@ -44,8 +46,10 @@ export class UsageMeter {
     this.webSearches += call.webSearches;
   }
 
-  addVerdict(isTrue: boolean): void {
-    if (isTrue) this.claimsTrue++;
+  // Null is an UNSURE card.
+  addVerdict(verdict: boolean | null): void {
+    if (verdict === null) this.claimsUnsure++;
+    else if (verdict) this.claimsTrue++;
     else this.claimsFalse++;
   }
 
@@ -67,6 +71,7 @@ export class UsageMeter {
       webSearches: this.webSearches,
       claimsTrue: this.claimsTrue,
       claimsFalse: this.claimsFalse,
+      claimsUnsure: this.claimsUnsure,
       claimsError: this.claimsError,
       costMicros: toMicros(cost),
       creditsMicros: toMicros(creditsFor(cost)),

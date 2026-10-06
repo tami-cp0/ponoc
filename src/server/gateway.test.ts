@@ -16,6 +16,7 @@ const EMPTY_USAGE: UsageSnapshot = {
   webSearches: 0,
   claimsTrue: 0,
   claimsFalse: 0,
+  claimsUnsure: 0,
   claimsError: 0,
   costMicros: 0,
   creditsMicros: 0,

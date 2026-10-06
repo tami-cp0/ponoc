@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { dismissWelcome } from "@/app/app/actions";
+import type { VerdictStatus } from "@/shared/protocol";
 import { useLiveSession } from "@/client/useLiveSession";
 import { useUrlDialog } from "@/client/useUrlDialog";
 import { CheckoutDialog } from "../credits/CheckoutDialog";
@@ -16,7 +17,7 @@ import { LiveNotice } from "./LiveNotice";
 interface Props {
   account: Account;
   credits: number;
-  verdictHistory: boolean[];
+  verdictHistory: VerdictStatus[];
   showWelcome: boolean;
 }
 
@@ -64,6 +65,7 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
     () => ({
       truths: cards.filter((c) => c.status === "true").length,
       falses: cards.filter((c) => c.status === "false").length,
+      unsures: cards.filter((c) => c.status === "unsure").length,
     }),
     [cards],
   );

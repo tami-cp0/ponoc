@@ -8,8 +8,11 @@ import { VerdictFace } from "./VerdictFace";
 import { extractSources } from "@/shared/sources";
 
 const VERDICT = {
-  true: { word: "TRUE", base: "#1C5334", deep: "#0F3F25" },
-  false: { word: "FALSE", base: "#8E1A1A", deep: "#6E1111" },
+  true: { word: "TRUE", base: "#1C5334", deep: "#0F3F25", stamp: "40cqw" },
+  false: { word: "FALSE", base: "#8E1A1A", deep: "#6E1111", stamp: "40cqw" },
+  // No call either way, so no hue: graphite as dark as the other two. The longer
+  // word gets a smaller stamp, spanning about as wide as FALSE.
+  unsure: { word: "UNSURE", base: "#494949", deep: "#373737", stamp: "28cqw" },
 } as const;
 
 const ARTICLE = "absolute inset-0 flex flex-col overflow-hidden px-7 pt-6 pb-6";
@@ -28,8 +31,8 @@ interface Props {
 }
 
 export function ClaimCard({ card, flipped, onToggleFlip, onVerdictReady }: Props) {
-  const settled = card.status === "true" || card.status === "false";
-  const v = card.status === "true" || card.status === "false" ? VERDICT[card.status] : null;
+  const v = card.status === "verifying" ? null : VERDICT[card.status];
+  const settled = v !== null;
 
   const controlled = onToggleFlip !== undefined;
   const [localFinding, setLocalFinding] = useState(false);
@@ -108,6 +111,7 @@ export function ClaimCard({ card, flipped, onToggleFlip, onVerdictReady }: Props
               <VerdictFace
                 claim={card.claim}
                 word={v!.word}
+                stampSize={v!.stamp}
                 onShowFinding={hasFinding ? () => toggleFinding(true) : null}
               />
             </div>

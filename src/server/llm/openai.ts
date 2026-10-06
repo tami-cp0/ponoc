@@ -71,8 +71,9 @@ export class OpenAIProvider implements LLMProvider {
       console.warn(`finding over ${MAX_FINDING_WORDS} words: ${finding.text}`);
     }
 
+    const verdict = parsed.verdict === "unsure" ? null : parsed.verdict === "true";
     return {
-      verdict: { verdict: parsed.verdict, reasoning: finding.text, ...(sources.length ? { sources } : {}) },
+      verdict: { verdict, reasoning: finding.text, ...(sources.length ? { sources } : {}) },
       usage,
     };
   }

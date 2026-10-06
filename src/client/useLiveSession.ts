@@ -197,7 +197,7 @@ export function useLiveSession(initialCredits: number) {
 function withVerdict(card: Card, result: Verdict): Card {
   return {
     ...card,
-    status: result.verdict ? "true" : "false",
+    status: result.verdict === null ? "unsure" : result.verdict ? "true" : "false",
     reasoning: result.reasoning,
     sources: result.sources,
   };

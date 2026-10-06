@@ -73,11 +73,11 @@ export async function finishLiveSession(
 function describeSession(usage: UsageSnapshot): string {
   const minutes = Math.floor(usage.audioSeconds / 60);
   const seconds = usage.audioSeconds % 60;
-  const checked = usage.claimsTrue + usage.claimsFalse;
-  const failed = usage.claimsError ? `, ${usage.claimsError} failed` : "";
+  const checked = usage.claimsTrue + usage.claimsFalse + usage.claimsUnsure;
+  const failed = usage.claimsError ? `, ${usage.claimsError} of them failed` : "";
   const credits = (usage.creditsMicros / 1_000_000).toFixed(3);
   return (
     `Listened ${minutes}m ${seconds}s · ${checked} claims checked ` +
-    `(${usage.claimsTrue} true, ${usage.claimsFalse} false${failed}) · ${credits} credits`
+    `(${usage.claimsTrue} true, ${usage.claimsFalse} false, ${usage.claimsUnsure} unsure${failed}) · ${credits} credits`
   );
 }

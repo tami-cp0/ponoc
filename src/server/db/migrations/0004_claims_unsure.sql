@@ -1,0 +1,1 @@
+ALTER TABLE "live_session" ADD COLUMN "claims_unsure" integer DEFAULT 0 NOT NULL;

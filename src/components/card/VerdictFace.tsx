@@ -3,10 +3,11 @@ import { ArrowRightIcon } from "../icons";
 interface Props {
   claim: string;
   word: string;
+  stampSize: string;
   onShowFinding: (() => void) | null;
 }
 
-export function VerdictFace({ claim, word, onShowFinding }: Props) {
+export function VerdictFace({ claim, word, stampSize, onShowFinding }: Props) {
   return (
     <>
       <span className="-mt-2 font-mono text-[8px] uppercase tracking-[0.24em]" style={{ color: "rgba(255,255,255,0.55)" }}>
@@ -18,7 +19,7 @@ export function VerdictFace({ claim, word, onShowFinding }: Props) {
       <div className="flex flex-1 items-center justify-center py-2">
         <span
           className="stamp block whitespace-nowrap font-array-wide font-semibold leading-none tracking-[-0.03em] text-white"
-          style={{ fontSize: "40cqw" }}
+          style={{ fontSize: stampSize }}
         >
           {word}
         </span>

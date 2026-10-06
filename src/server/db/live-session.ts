@@ -18,6 +18,8 @@ export const liveSession = pgTable(
     webSearches: integer("web_searches").notNull().default(0),
     claimsTrue: integer("claims_true").notNull().default(0),
     claimsFalse: integer("claims_false").notNull().default(0),
+    // Claims that ended UNSURE, including checks that failed (also in claims_error).
+    claimsUnsure: integer("claims_unsure").notNull().default(0),
     claimsError: integer("claims_error").notNull().default(0),
     costUsd: numeric("cost_usd", { precision: 14, scale: 6, mode: "number" }).notNull().default(0),
     creditsUsed: numeric("credits_used", { precision: 14, scale: 6, mode: "number" }).notNull().default(0),

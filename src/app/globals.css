@@ -16,6 +16,7 @@
   --line: #e5e5e5;
   --true: #16a34a;
   --false: #dc2626;
+  --unsure: #494949;
 }
 
 body {
@@ -794,6 +795,9 @@ body {
 }
 .settings-stat-false .settings-stat-num {
   color: var(--false);
+}
+.settings-stat-unsure .settings-stat-num {
+  color: var(--unsure);
 }
 
 .settings-balance {

@@ -37,10 +37,12 @@ export class Session implements LiveSession {
     this.queue = new ClaimQueue({
       verify: (id, text) => this.verify(id, text),
       onSpawned: (id, text) => this.send({ type: "claim:spawned", id, text }),
-      // The client isn't told: a claim that can't be verified keeps its pending animation.
-      onError: (_id, message) => {
+      // The card still needs an answer, so a failed check lands as unsure.
+      onError: (id, message) => {
         this.meter.addError();
+        this.meter.addVerdict(null);
         console.error("verify failed:", message);
+        this.send({ type: "claim:verdict", id, result: { verdict: null, reasoning: "The check didn't go through." } });
       },
     });
   }

@@ -11,6 +11,7 @@ import { Button } from "../Button";
 interface Tally {
   truths: number;
   falses: number;
+  unsures: number;
 }
 
 export interface Account {
@@ -80,6 +81,10 @@ function StatsRow({ tally }: { tally: Tally }) {
         <div className="settings-stat settings-stat-false">
           <span className="settings-stat-num">{tally.falses.toLocaleString()}</span>
           <span className="settings-stat-label">false</span>
+        </div>
+        <div className="settings-stat settings-stat-unsure">
+          <span className="settings-stat-num">{tally.unsures.toLocaleString()}</span>
+          <span className="settings-stat-label">unsure</span>
         </div>
       </div>
     </div>

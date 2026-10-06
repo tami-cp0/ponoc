@@ -1,4 +1,6 @@
-export type CardStatus = "verifying" | "true" | "false";
+export type VerdictStatus = "true" | "false" | "unsure";
+
+export type CardStatus = "verifying" | VerdictStatus;
 
 export interface Card {
   id: string;
@@ -9,7 +11,9 @@ export interface Card {
 }
 
 export interface Verdict {
-  verdict: boolean;
+  // Null when the claim couldn't be called either way: nothing on the web
+  // settles it, or the check itself failed.
+  verdict: boolean | null;
   reasoning: string;
   sources?: string[];
 }
