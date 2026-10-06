@@ -27,7 +27,7 @@ export function DeckControls({ running, connecting, stopping, onToggle, onReset,
   return (
     <div className="stage-controls">
       <Button height="var(--control-height)" squareEdge={open ? null : "right"} pressed={stopping} onClick={onToggle}>
-        {open ? "Stop" : "Start"}
+        {open ? "Stop" : "Start listening"}
       </Button>
 
       <motion.div
@@ -56,7 +56,7 @@ export function DeckControls({ running, connecting, stopping, onToggle, onReset,
       </motion.div>
 
       <Button height="var(--control-height)" squareEdge={open ? null : "left"} onClick={onReset}>
-        reset
+        Clear
       </Button>
     </div>
   );

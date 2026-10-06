@@ -20,10 +20,10 @@ export type Status = "idle" | "connecting" | LiveStatus;
 const AUTO_STOP_PRESS_MS = 220;
 
 const NOTICE = {
-  micBlocked: "Microphone blocked. Allow it in your browser, then press Start.",
+  micBlocked: "Microphone blocked. Allow it in your browser, then start listening again.",
   noMic: "No microphone found.",
   replaced: "Listening moved to another tab or device.",
-  lost: "Connection lost. Press Start to continue.",
+  lost: "Connection lost. Start listening again to continue.",
   failed: "Couldn't start listening. Try again.",
   offline: "You're offline. Check your connection and try again.",
 };
