@@ -48,7 +48,7 @@ export class OpenAIProvider implements LLMProvider {
   async verify(claim: string): Promise<VerifyResult> {
     const response = await this.client.responses.create({
       model: env.verifyModel,
-      instructions: VERIFY_INSTRUCTIONS,
+      instructions: `${VERIFY_INSTRUCTIONS}\n\nToday is ${new Date().toDateString()}.`,
       input: claim,
       tools: [{ type: "web_search" }],
       // Without this the model answers common-knowledge claims from memory,
@@ -62,7 +62,7 @@ export class OpenAIProvider implements LLMProvider {
     const parsed = readJson(response.output_text);
     if (!parsed) return { verdict: null, usage };
 
-    const finding = splitCitations(parsed.reasoning);
+    const finding = splitCitations(parsed.finding);
     const sources = await dropDeadLinks(
       pickSources([...parsed.sources, ...finding.sources], collectSources(response)),
     );
