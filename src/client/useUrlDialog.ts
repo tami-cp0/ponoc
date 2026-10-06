@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect } from "react";
 
 // Popups worth a URL: they can be linked to, survive a reload, and close with Back.
@@ -19,8 +19,10 @@ function urlFor(pathname: string, params: URLSearchParams, dialog: UrlDialog | n
   return query ? `${pathname}?${query}` : pathname;
 }
 
+// The native history calls update useSearchParams without a server round trip.
+// router.push would re-render the whole page on the server (auth, balance,
+// history) before the popup could show.
 export function useUrlDialog() {
-  const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const current = DIALOGS.find((name) => params.has(name)) ?? null;
@@ -36,13 +38,13 @@ export function useUrlDialog() {
       const url = urlFor(pathname, params, dialog);
       // Switching popups replaces the entry, so one Back still closes it.
       if (current) {
-        router.replace(url, { scroll: false });
+        window.history.replaceState(null, "", url);
       } else {
         openedHere = true;
-        router.push(url, { scroll: false });
+        window.history.pushState(null, "", url);
       }
     },
-    [current, pathname, params, router],
+    [current, pathname, params],
   );
 
   // Closes `dialog` only if it's the one open: a popup being swapped out for
@@ -52,12 +54,12 @@ export function useUrlDialog() {
       if (current !== dialog) return;
       if (openedHere) {
         openedHere = false;
-        router.back();
+        window.history.back();
       } else {
-        router.replace(urlFor(pathname, params, null), { scroll: false });
+        window.history.replaceState(null, "", urlFor(pathname, params, null));
       }
     },
-    [current, pathname, params, router],
+    [current, pathname, params],
   );
 
   return { current, open, close };
