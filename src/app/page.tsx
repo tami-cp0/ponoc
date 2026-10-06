@@ -20,10 +20,10 @@ const SHOWCASE_FALSE: Card = {
 
 const SHOWCASE_TRUE: Card = {
   id: "showcase-true",
-  claim: "Ketchup was once sold as medicine.",
+  claim: "Grass is green.",
   status: "true",
   reasoning:
-    "Yes. In the 1830s an Ohio doctor sold tomato ketchup in pill form as a cure for indigestion and diarrhea ([tastingtable.com](https://www.tastingtable.com/1497845/ketchup-origin-medicine/)).",
+    "Yes. Grass is full of chlorophyll, which absorbs almost every color of sunlight except green. The green bounces back, and that's what we see ([askdruniverse.wsu.edu](https://askdruniverse.wsu.edu/2020/05/01/inside-blade-grass-green/)).",
 };
 
 const FEATURES = [
