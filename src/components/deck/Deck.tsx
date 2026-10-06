@@ -1,18 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { dismissWelcome } from "@/app/app/actions";
 import type { VerdictStatus } from "@/shared/protocol";
 import { useLiveSession } from "@/client/useLiveSession";
 import { useUrlDialog } from "@/client/useUrlDialog";
 import { CheckoutDialog } from "../credits/CheckoutDialog";
 import { OutOfCredits } from "../credits/OutOfCredits";
-import { WelcomeGift } from "../credits/WelcomeGift";
 import { GearIcon } from "../icons";
 import { Button } from "../Button";
 import { SettingsModal, type Account } from "../settings/SettingsModal";
 import { ClaimDeck } from "./ClaimDeck";
 import { LiveNotice } from "./LiveNotice";
+import { Tutorial } from "./Tutorial";
 
 interface Props {
   account: Account;
@@ -37,7 +37,12 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
     getAnalyser,
   } = useLiveSession(initialCredits);
   const dialog = useUrlDialog();
-  const [welcomeOpen, setWelcomeOpen] = useState(showWelcome);
+  const [tutorialOpen, setTutorialOpen] = useState(showWelcome);
+
+  // The tutorial shows once: it counts as seen as soon as it opens.
+  useEffect(() => {
+    if (showWelcome) void dismissWelcome();
+  }, [showWelcome]);
 
   const running = status === "listening";
   const connecting = status === "connecting";
@@ -55,11 +60,7 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
     else listen();
   };
 
-  const closeWelcome = () => {
-    if (!welcomeOpen) return;
-    setWelcomeOpen(false);
-    void dismissWelcome();
-  };
+  const closeTutorial = () => setTutorialOpen(false);
 
   const tally = useMemo(
     () => ({
@@ -100,14 +101,15 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
         credits={credits}
         onAddCredits={openCheckout}
       />
-      <WelcomeGift
-        open={welcomeOpen}
-        onClose={closeWelcome}
-        onStart={() => {
-          closeWelcome();
-          listen();
-        }}
-      />
+      {tutorialOpen && (
+        <Tutorial
+          onClose={closeTutorial}
+          onStart={() => {
+            closeTutorial();
+            listen();
+          }}
+        />
+      )}
       <LiveNotice message={notice} onDismiss={dismissNotice} />
       <OutOfCredits open={ranOut} onTopUp={openCheckout} onClose={dismissRanOut} />
       <CheckoutDialog open={dialog.current === "checkout"} onClose={() => dialog.close("checkout")} />

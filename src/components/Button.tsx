@@ -16,6 +16,8 @@ interface Props {
   squareEdge?: "left" | "right" | null;
   // Shows the button held down, as if clicked, when the app presses it itself.
   pressed?: boolean;
+  // A compact key, for tight rows like a dialog's footer.
+  size?: "small";
   // Sent with the form when this button submits it.
   name?: string;
   value?: string;
@@ -33,6 +35,7 @@ export function Button({
   radius,
   squareEdge,
   pressed,
+  size,
   name,
   value,
 }: Props) {
@@ -45,7 +48,14 @@ export function Button({
 
   if (href) {
     return (
-      <Link href={href} className="btn" style={style} aria-label={ariaLabel} data-square={squareEdge ?? undefined}>
+      <Link
+        href={href}
+        className="btn"
+        style={style}
+        aria-label={ariaLabel}
+        data-square={squareEdge ?? undefined}
+        data-size={size}
+      >
         {children}
       </Link>
     );
@@ -61,6 +71,7 @@ export function Button({
       aria-label={ariaLabel}
       data-square={squareEdge ?? undefined}
       data-pressed={pressed || undefined}
+      data-size={size}
       name={name}
       value={value}
     >

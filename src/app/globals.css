@@ -578,6 +578,12 @@ body {
   transition-delay: 0s, 0.14s;
 }
 
+.btn[data-size="small"] {
+  height: 36px;
+  padding: 0 1.05rem;
+  font-size: 0.85rem;
+}
+
 .btn svg:not([data-brand]) {
   flex-shrink: 0;
   transition: transform 0.2s ease;
@@ -990,6 +996,16 @@ body {
   line-height: 1.55;
   color: var(--muted);
   text-wrap: pretty;
+}
+
+/* The tutorial's cards are real cards shrunk to fit, so their claim (the text-lg
+   paragraph) and finding (the other one) are set larger to come out readable.
+   The finding is sized inline to fit its box, hence the important. */
+.tutorial-card p.text-lg {
+  font-size: var(--claim);
+}
+.tutorial-card p:not(.text-lg) {
+  font-size: var(--finding) !important;
 }
 
 .spent {
