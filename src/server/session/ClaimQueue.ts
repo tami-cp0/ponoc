@@ -3,7 +3,7 @@ import { similarity } from "./dedup";
 
 const DEDUP_WINDOW_MS = 8000;
 const DEDUP_SIMILARITY = 0.85;
-const MAX_CONCURRENT_VERIFY = 3;
+const MAX_CONCURRENT_VERIFY = 5;
 
 type Priority = "high" | "low";
 

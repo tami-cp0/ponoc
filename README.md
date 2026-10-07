@@ -23,7 +23,7 @@ A live session runs this pipeline:
 mic → 16 kHz PCM → /ws → Deepgram (speech-to-text)
     → Segmenter (finished sentences)
     → triage model (is there a checkable claim?)
-    → ClaimQueue (dedupe, prioritise, max 3 at once)
+    → ClaimQueue (dedupe, prioritise, max 5 at once)
     → verify model + web search (true / false + evidence)
     → card on the deck
 ```

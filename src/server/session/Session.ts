@@ -1,5 +1,6 @@
 import type { LiveStatus, ServerEvent } from "@/shared/protocol";
 import type { LiveSession } from "../gateway";
+import { dropDeadLinks } from "../llm/finding";
 import type { LLMProvider } from "../llm/provider";
 import type { Prices } from "../usage/pricing";
 import { Transcriber } from "../stt/deepgram";
@@ -103,6 +104,13 @@ export class Session implements LiveSession {
     if (!verdict) throw new Error("unreadable verdict");
     this.meter.addVerdict(verdict.verdict);
     this.send({ type: "claim:verdict", id, result: verdict });
+
+    // The card goes out first; links that turn out dead come off it afterwards.
+    if (!verdict.sources) return;
+    const alive = await dropDeadLinks(verdict.sources);
+    if (alive.length < verdict.sources.length) {
+      this.send({ type: "claim:verdict", id, result: { ...verdict, sources: alive.length ? alive : undefined } });
+    }
   }
 }
 

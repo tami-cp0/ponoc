@@ -63,7 +63,7 @@ describe("ClaimQueue", () => {
     const { queue } = makeQueue(verify);
     for (let i = 0; i < 10; i++) queue.add(`distinct claim number ${i}`, "low", i * 100);
     await queue.drain();
-    expect(peak).toBeLessThanOrEqual(3);
+    expect(peak).toBeLessThanOrEqual(5);
     expect(verify).toHaveBeenCalledTimes(10);
   });
 
