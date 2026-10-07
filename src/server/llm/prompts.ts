@@ -6,15 +6,15 @@ export const TRIAGE_SCHEMA = {
       type: "string",
       enum: ["factual", "generalization", "prediction", "opinion", "none"],
     },
+    canonical_claim: { type: ["string", "null"] },
     is_checkable_now: { type: "boolean" },
     unverifiable_reason: {
       type: ["string", "null"],
       enum: ["subjective", "future_looking", "private", "insufficient_specificity", null],
     },
-    canonical_claim: { type: ["string", "null"] },
     priority: { type: "string", enum: ["high", "low"] },
   },
-  required: ["claim_type", "is_checkable_now", "unverifiable_reason", "canonical_claim", "priority"],
+  required: ["claim_type", "canonical_claim", "is_checkable_now", "unverifiable_reason", "priority"],
 } as const;
 
 export const TRIAGE_INSTRUCTIONS = `You pick out claims to fact-check in a live conversation, transcribed as people speak. Each claim you pick is checked on the web and ruled true or false.
@@ -36,9 +36,11 @@ Not checkable (is_checkable_now=false), with unverifiable_reason:
 
 No claim at all (claim_type="none", unverifiable_reason=null): small talk, plain questions, requests, hypotheticals, and exaggeration or figures of speech nobody would take literally.
 
-If it's a claim about the world and you're unsure whether sources could settle it, mark it checkable.
+A claim is only checkable if canonical_claim makes sense to someone who wasn't there, so they could look it up from that sentence alone. If "it", "they", "this", "that", "here" or "there" still points at something the context doesn't name, it isn't checkable (insufficient_specificity).
 
-canonical_claim: the claim as one standalone sentence, in the speaker's own words. Edit only what it takes to stand alone: join a claim spread across utterances, swap pronouns and references ("it", "they", "that") for what they point to, turn a question or passed-on claim into the claim itself, fix an obviously misheard word, and repair grammar these edits break. Keep every qualifier, hedge and bit of framing ("roughly", "most", "even though it seems"); dropping one changes the claim. Never change what the claim says, even if you think it's wrong. If the utterance makes several claims, take the one most worth checking. Null when not checkable.
+If it stands on its own and you're unsure whether sources could settle it, mark it checkable.
+
+canonical_claim: the claim as one standalone sentence, in the speaker's own words. Edit only what it takes to stand alone: join a claim spread across utterances, swap pronouns and references ("it", "they", "that") for what they point to, turn a question or passed-on claim into the claim itself, fix an obviously misheard word, and repair grammar these edits break. Keep every qualifier, hedge and bit of framing ("roughly", "most", "even though it seems"); dropping one changes the claim. Never change what the claim says, even if you think it's wrong. If the utterance makes several claims, take the one most worth checking. Write it before deciding whether it's checkable; null only when there's no claim at all.
 
 priority: "high" when the claim hinges on a specific number, name or date; otherwise "low".`;
 

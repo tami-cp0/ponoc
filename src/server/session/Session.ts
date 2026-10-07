@@ -8,7 +8,7 @@ import { Segmenter } from "./Segmenter";
 import { UsageMeter, type UsageSnapshot } from "../usage/UsageMeter";
 
 // Utterances of context given to triage, so "it" can be resolved.
-const TRIAGE_CONTEXT = 3;
+const TRIAGE_CONTEXT = 6;
 // How long claims already heard may keep verifying after Stop.
 const DRAIN_TIMEOUT_MS = 20_000;
 
