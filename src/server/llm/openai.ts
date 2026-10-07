@@ -48,12 +48,13 @@ export class OpenAIProvider implements LLMProvider {
   async verify(claim: string): Promise<VerifyResult> {
     const response = await this.client.responses.create({
       model: env.verifyModel,
-      instructions: `${VERIFY_INSTRUCTIONS}\n\nToday is ${new Date().toDateString()}.`,
+      instructions: `Today is ${new Date().toLocaleDateString("en-GB", { dateStyle: "long", timeZone: "UTC" })}.\n\n${VERIFY_INSTRUCTIONS}`,
       input: claim,
       tools: [{ type: "web_search" }],
       // Without this the model answers common-knowledge claims from memory,
       // and a verdict with no search has no source to show.
       tool_choice: "required",
+      reasoning: { effort: "low" },
       include: ["web_search_call.action.sources"],
       text: { format: { type: "json_schema", name: "verdict", schema: VERIFY_SCHEMA, strict: true } },
     });
