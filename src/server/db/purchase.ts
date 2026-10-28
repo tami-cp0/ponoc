@@ -10,6 +10,8 @@ export const purchase = pgTable(
     amountCents: integer("amount_cents").notNull(),
     credits: numeric("credits", { precision: 14, scale: 6, mode: "number" }).notNull(),
     currency: text("currency").notNull(),
+    presentmentAmount: integer("presentment_amount"),
+    presentmentCurrency: text("presentment_currency"),
     status: text("status").notNull().default("pending"),
     stripeCheckoutSessionId: text("stripe_checkout_session_id").unique(),
     stripePaymentIntentId: text("stripe_payment_intent_id"),

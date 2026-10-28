@@ -7,6 +7,8 @@ describe("Stripe purchase snapshots", () => {
       amountCents: 1000,
       credits: 55,
       currency: "usd",
+      presentmentAmount: null,
+      presentmentCurrency: null,
     });
   });
 

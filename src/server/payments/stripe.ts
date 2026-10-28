@@ -22,6 +22,8 @@ export interface PurchaseSnapshot {
   amountCents: number;
   credits: number;
   currency: string;
+  presentmentAmount: number | null;
+  presentmentCurrency: string | null;
   status: PurchaseStatus;
   stripeCheckoutSessionId: string | null;
   failureReason: string | null;
@@ -45,6 +47,8 @@ export function snapshotFromSelection(userId: string, id: string, selection: Che
     amountCents: usd * 100,
     credits,
     currency: PURCHASE_CURRENCY,
+    presentmentAmount: null,
+    presentmentCurrency: null,
     status: "pending",
     stripeCheckoutSessionId: null,
     failureReason: null,
@@ -140,8 +144,26 @@ export async function fulfillCheckout(session: Stripe.Checkout.Session, eventId:
     if (row.stripeCheckoutSessionId && row.stripeCheckoutSessionId !== session.id) {
       throw new Error("Stripe session does not match purchase snapshot");
     }
-    if (row.currency !== session.currency || row.amountCents !== session.amount_total) {
-      throw new Error("Stripe amount or currency does not match purchase snapshot");
+    const presentment = session.presentment_details;
+    const presentmentAmount = presentment?.presentment_amount ?? session.amount_total;
+    const presentmentCurrency = presentment?.presentment_currency ?? session.currency;
+    if (
+      presentmentAmount === null ||
+      presentmentCurrency === null ||
+      !Number.isInteger(presentmentAmount) ||
+      presentmentAmount <= 0 ||
+      !presentmentCurrency
+    ) {
+      throw new Error("Stripe session is missing verified presentment details");
+    }
+    if (
+      presentment &&
+      (presentmentAmount !== session.amount_total || presentmentCurrency !== session.currency)
+    ) {
+      throw new Error("Stripe presentment details do not match the Checkout Session");
+    }
+    if (!presentment && (row.currency !== session.currency || row.amountCents !== session.amount_total)) {
+      throw new Error("Stripe amount or currency does not match USD purchase snapshot");
     }
 
     await tx
@@ -151,6 +173,8 @@ export async function fulfillCheckout(session: Stripe.Checkout.Session, eventId:
         stripeCheckoutSessionId: session.id,
         stripePaymentIntentId: typeof session.payment_intent === "string" ? session.payment_intent : null,
         stripeEventId: eventId,
+        presentmentAmount,
+        presentmentCurrency,
         updatedAt: new Date(),
         fulfilledAt: new Date(),
       })

@@ -37,5 +37,5 @@ export function formatCredits(credits: number): string {
 }
 
 export function formatPurchasePrice(amount: number): string {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(amount);
+  return `US$${new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)}`;
 }

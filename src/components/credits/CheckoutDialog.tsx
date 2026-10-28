@@ -120,6 +120,7 @@ export function CheckoutDialog({ open, onClose, onContinue }: Props) {
 
       <fieldset className="checkout-packs">
         <legend className="sr-only">Choose a credit pack</legend>
+        <p>Prices are shown in US dollars. Local-currency options are available at checkout.</p>
         {CREDIT_PACKS.map((p) => (
           <label key={p.id} className="checkout-pack">
             <input
