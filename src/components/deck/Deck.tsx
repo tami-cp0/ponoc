@@ -13,6 +13,7 @@ import { SettingsModal, type Account } from "../settings/SettingsModal";
 import { ClaimDeck } from "./ClaimDeck";
 import { LiveNotice } from "./LiveNotice";
 import { Tutorial } from "./Tutorial";
+import type { CheckoutSelection } from "@/shared/credits";
 
 interface Props {
   account: Account;
@@ -38,6 +39,7 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
   } = useLiveSession(initialCredits);
   const dialog = useUrlDialog();
   const [tutorialOpen, setTutorialOpen] = useState(showWelcome);
+  const [checkoutAttempt, setCheckoutAttempt] = useState<{ key: string; id: string } | null>(null);
 
   // The tutorial shows once: it counts as seen as soon as it opens.
   useEffect(() => {
@@ -61,6 +63,22 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
   };
 
   const closeTutorial = () => setTutorialOpen(false);
+
+  const startCheckout = async (selection: CheckoutSelection) => {
+    const key = `${selection.packId}:${selection.usd}:${selection.credits}`;
+    const purchaseId = checkoutAttempt?.key === key ? checkoutAttempt.id : crypto.randomUUID();
+    if (!checkoutAttempt || checkoutAttempt.key !== key) setCheckoutAttempt({ key, id: purchaseId });
+    const response = await fetch("/api/stripe/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ selection, purchaseId }),
+    });
+    const result = (await response.json()) as { url?: string; error?: string };
+    if (!response.ok || !result.url) {
+      throw new Error(result.error ?? "Unable to start checkout");
+    }
+    window.location.assign(result.url);
+  };
 
   const tally = useMemo(
     () => ({
@@ -112,7 +130,11 @@ export function Deck({ account, credits: initialCredits, verdictHistory, showWel
       )}
       <LiveNotice message={notice} onDismiss={dismissNotice} />
       <OutOfCredits open={ranOut} onTopUp={openCheckout} onClose={dismissRanOut} />
-      <CheckoutDialog open={dialog.current === "checkout"} onClose={() => dialog.close("checkout")} />
+      <CheckoutDialog
+        open={dialog.current === "checkout"}
+        onClose={() => dialog.close("checkout")}
+        onContinue={(selection) => void startCheckout(selection)}
+      />
     </div>
   );
 }

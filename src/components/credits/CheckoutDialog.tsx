@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   CREDIT_PACKS,
   DEFAULT_PACK_ID,
   MAX_PURCHASE_USD,
   MIN_PURCHASE_USD,
   creditsForUsd,
+  formatPurchasePrice,
   type CheckoutSelection,
 } from "@/shared/credits";
 import { Dialog } from "../Dialog";
@@ -18,13 +20,18 @@ const CUSTOM = "custom";
 interface Props {
   open: boolean;
   onClose: () => void;
-  // Payment is wired up separately; this is where it takes over.
-  onContinue?: (selection: CheckoutSelection) => void;
+  onContinue?: (selection: CheckoutSelection) => Promise<void> | void;
 }
 
 export function CheckoutDialog({ open, onClose, onContinue }: Props) {
   const [packId, setPackId] = useState(DEFAULT_PACK_ID);
   const [customUsd, setCustomUsd] = useState("");
+  const searchParams = useSearchParams();
+  const purchaseId = searchParams.get("purchase_id");
+  const paymentResult = searchParams.get("checkout");
+  const [purchaseStatus, setPurchaseStatus] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const custom = Number(customUsd);
   const customValid = Number.isInteger(custom) && custom >= MIN_PURCHASE_USD && custom <= MAX_PURCHASE_USD;
@@ -47,6 +54,60 @@ export function CheckoutDialog({ open, onClose, onContinue }: Props) {
       : custom > MAX_PURCHASE_USD
         ? `Maximum is $${MAX_PURCHASE_USD}`
         : "Whole dollars only";
+
+  useEffect(() => {
+    if (!open || paymentResult !== "success" || !purchaseId) return;
+    let active = true;
+    const poll = async () => {
+      const response = await fetch(`/api/stripe/purchases/${purchaseId}`);
+      if (!response.ok) return;
+      const result = (await response.json()) as { status: string };
+      if (active) setPurchaseStatus(result.status);
+    };
+    void poll();
+    const timer = window.setInterval(() => void poll(), 1500);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [open, paymentResult, purchaseId]);
+
+  if ((paymentResult === "success" || paymentResult === "cancelled") && purchaseId) {
+    const confirmed = purchaseStatus === "paid";
+    const failed = purchaseStatus === "failed";
+    return (
+      <Dialog open={open} onClose={onClose} label="Payment status" className="checkout">
+        <header className="settings-head">
+          <h2 className="settings-title font-array">
+            {paymentResult === "cancelled"
+              ? "Payment cancelled"
+              : confirmed
+                ? "Credits added"
+                : failed
+                  ? "Payment not completed"
+                  : "Confirming payment"}
+          </h2>
+          <Button aria-label="Close" width={38} height={38} onClick={onClose}>
+            <CloseIcon />
+          </Button>
+        </header>
+        <p>
+          {paymentResult === "cancelled"
+            ? "No payment was made. You can try again whenever you are ready."
+            : failed
+              ? "The payment was not completed. You can try again."
+              : confirmed
+                ? "Your credits are ready."
+                : "Stripe is confirming your payment. This can take a moment."}
+        </p>
+        {(confirmed || failed) && (
+          <Button width="100%" onClick={onClose}>
+            Done
+          </Button>
+        )}
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onClose={onClose} label="Add credits" className="checkout">
@@ -76,7 +137,7 @@ export function CheckoutDialog({ open, onClose, onContinue }: Props) {
             <span className="checkout-pack-detail">
               {p.bonusPercent > 0 && <span className="checkout-bonus">+{p.bonusPercent}% bonus credits</span>}
             </span>
-            <span className="checkout-pack-price">${p.usd}</span>
+            <span className="checkout-pack-price">{formatPurchasePrice(p.usd)}</span>
             {p.tag && <span className="checkout-tag">{p.tag}</span>}
           </label>
         ))}
@@ -101,7 +162,7 @@ export function CheckoutDialog({ open, onClose, onContinue }: Props) {
             </span>
           </span>
           <span className="checkout-custom-field">
-            <span aria-hidden>$</span>
+            <span aria-hidden>CA$</span>
             <input
               className="checkout-custom-input"
               type="number"
@@ -121,8 +182,20 @@ export function CheckoutDialog({ open, onClose, onContinue }: Props) {
         </label>
       </fieldset>
 
-      <Button width="100%" disabled={!selection} onClick={() => selection && onContinue?.(selection)}>
-        {selection ? `Continue to payment · $${selection.usd}` : "Continue to payment"}
+      {error && <p role="alert">{error}</p>}
+      <Button
+        width="100%"
+        disabled={!selection || starting}
+        onClick={() => {
+          if (!selection || !onContinue) return;
+          setError(null);
+          setStarting(true);
+          void Promise.resolve(onContinue(selection))
+            .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Unable to start checkout"))
+            .finally(() => setStarting(false));
+        }}
+      >
+        {starting ? "Opening secure checkout…" : selection ? `Continue to payment · ${formatPurchasePrice(selection.usd)}` : "Continue to payment"}
       </Button>
     </Dialog>
   );
