@@ -162,7 +162,7 @@ export function CheckoutDialog({ open, onClose, onContinue }: Props) {
             </span>
           </span>
           <span className="checkout-custom-field">
-            <span aria-hidden>CA$</span>
+            <span aria-hidden>US$</span>
             <input
               className="checkout-custom-input"
               type="number"

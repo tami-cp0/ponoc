@@ -85,6 +85,7 @@ export async function createOrGetCheckout(
     {
       mode: "payment",
       automatic_tax: { enabled: false },
+      adaptive_pricing: { enabled: true },
       line_items: [
         {
           price_data: {

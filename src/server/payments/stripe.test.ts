@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { snapshotFromSelection } from "./stripe";
 
 describe("Stripe purchase snapshots", () => {
-  it("uses the pack's bonus credits and integer CAD cents", () => {
+  it("uses the pack's bonus credits and integer USD cents", () => {
     expect(snapshotFromSelection("user-1", "purchase-1", { packId: "plus", usd: 10, credits: 55 })).toMatchObject({
       amountCents: 1000,
       credits: 55,
-      currency: "cad",
+      currency: "usd",
     });
   });
 
