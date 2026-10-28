@@ -3,13 +3,14 @@ import { Pool } from "pg";
 import { account } from "./account";
 import { liveSession } from "./live-session";
 import { notification } from "./notification";
+import { purchase } from "./purchase";
 import { session } from "./session";
 import { user } from "./user";
 import { verification } from "./verification";
 
-export { account, liveSession, notification, session, user, verification };
+export { account, liveSession, notification, purchase, session, user, verification };
 
-export const schema = { account, liveSession, notification, session, user, verification };
+export const schema = { account, liveSession, notification, purchase, session, user, verification };
 
 // The pool connects lazily, on the first query, so importing this during
 // `next build` needs no database. server.ts checks DATABASE_URL at startup.
