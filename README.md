@@ -131,15 +131,16 @@ These token counts are illustrative, not measured. Real cost per minute swings w
 - Every new account gets **5 free credits** ($1 of retail usage), granted when the account is created.
 - A user's balance is `user.credits`, in plain credits. Each session's spending is deducted from it as the session is saved, and recorded in `live_session.credits_used`. To change someone's balance, edit `user.credits` directly.
 - A session can't start at zero, and stops when the balance runs out mid-session (close code `4402`). Claims already being checked still finish, so a balance can end slightly below zero.
-- Checkout offers three packs, defined in [`src/shared/credits.ts`](src/shared/credits.ts): $2 → 10 credits, $10 → 55 (+10% bonus), $20 → 120 (+20% bonus), plus a custom amount (whole dollars, $2 to $500, at the base rate of 5 credits per dollar, no bonus). The checkout UI ends at "Continue to payment"; payment processing is handled separately.
+- Checkout offers three USD packs, defined in [`src/shared/credits.ts`](src/shared/credits.ts): US$2 → 10 credits, US$10 → 55 (+10% bonus), US$20 → 120 (+20% bonus), plus a custom amount (whole USD dollars, $2 to $500, at the base rate of 5 credits per dollar, no bonus). Stripe Checkout receives USD as the canonical amount and may present an eligible local-currency equivalent.
 
 ### Working on payments
 
-Payment processing is built separately. The UI side stops at checkout:
+Payments use Stripe-hosted Checkout for one-time USD purchases:
 
-- [`CheckoutDialog`](src/components/credits/CheckoutDialog.tsx) takes an `onContinue(selection)` prop that is not wired up yet. `selection` is `{ packId, usd, credits }`, where `packId` is a pack id or `"custom"`. It's rendered in [`Deck`](src/components/deck/Deck.tsx).
+- [`CheckoutDialog`](src/components/credits/CheckoutDialog.tsx) sends `{ packId, usd, credits }` to the authenticated Checkout route, where the server validates the selection and creates a pending purchase before calling Stripe.
 - Packs live in [`src/shared/credits.ts`](src/shared/credits.ts).
-- A purchase adds to `user.credits` ([schema](src/server/db/user.ts)) and should log a `credits_topped_up` notification (see [`notify`](src/server/notify.ts)).
+- The app labels prices in US dollars and tells customers that local-currency options may be available at Checkout. Stripe Adaptive Pricing determines whether to show a converted amount.
+- Stripe webhooks are signature-verified and idempotent. A successful purchase adds to `user.credits` ([schema](src/server/db/user.ts)) and logs a `credits_topped_up` notification.
 - Purchases are non-refundable except where the law requires otherwise, and purchased credits never expire (see the Terms at `/legal#terms`).
 
 ### Storage

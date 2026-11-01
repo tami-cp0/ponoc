@@ -3,6 +3,7 @@ export const CREDIT_USD = 0.2;
 export const TRIAL_CREDITS = 5;
 export const MIN_PURCHASE_USD = 2;
 export const MAX_PURCHASE_USD = 500;
+export const PURCHASE_CURRENCY = "usd";
 
 export interface CreditPack {
   id: string;
@@ -26,11 +27,15 @@ export interface CheckoutSelection {
   credits: number;
 }
 
-// Custom amounts get no bonus: whole dollars at the base rate.
+// Custom amounts get no bonus: whole USD dollars at the base rate.
 export function creditsForUsd(usd: number): number {
   return Math.round(usd / CREDIT_USD);
 }
 
 export function formatCredits(credits: number): string {
   return credits.toLocaleString(undefined, { maximumFractionDigits: credits < 10 ? 2 : 1 });
+}
+
+export function formatPurchasePrice(amount: number): string {
+  return `US$${new Intl.NumberFormat(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)}`;
 }

@@ -18,6 +18,8 @@ const REQUIRED = [
   "VERIFY_OUTPUT_USD_PER_M",
   "WEB_SEARCH_USD",
   "DEEPGRAM_USD_PER_MIN",
+  "STRIPE_SECRET_KEY",
+  "STRIPE_WEBHOOK_SECRET",
 ];
 
 const REQUIRED_IN_PRODUCTION = ["RESEND_API_KEY", "EMAIL_FROM"];
@@ -91,5 +93,11 @@ export const env = {
   },
   get isProduction() {
     return process.env.NODE_ENV === "production";
+  },
+  get stripeSecretKey() {
+    return read("STRIPE_SECRET_KEY");
+  },
+  get stripeWebhookSecret() {
+    return read("STRIPE_WEBHOOK_SECRET");
   },
 };
